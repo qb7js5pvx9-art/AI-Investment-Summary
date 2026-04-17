@@ -7,7 +7,9 @@ const state = {
 const el = {
   searchInput: document.getElementById("stock-search"),
   searchResults: document.getElementById("search-results"),
+  quickPicks: document.getElementById("quick-picks"),
   watchlist: document.getElementById("watchlist"),
+  watchlistMeta: document.getElementById("watchlist-meta"),
   addManual: document.getElementById("add-manual"),
   hoursBack: document.getElementById("hours-back"),
   maxArticles: document.getElementById("max-articles"),
@@ -16,7 +18,9 @@ const el = {
   clearBtn: document.getElementById("clear-btn"),
   status: document.getElementById("status"),
   outputPlaceholder: document.getElementById("output-placeholder"),
+  loadingPanel: document.getElementById("loading-panel"),
   outputPanel: document.getElementById("output-panel"),
+  toast: document.getElementById("toast"),
   generatedAt: document.getElementById("generated-at"),
   articleCount: document.getElementById("article-count"),
   tickersUsed: document.getElementById("tickers-used"),
@@ -36,6 +40,19 @@ function setStatus(message, isError = false) {
   el.status.classList.toggle("is-error", isError);
 }
 
+let toastTimer = null;
+function showToast(message) {
+  if (!message) return;
+  el.toast.textContent = message;
+  el.toast.classList.remove("hidden");
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+  }
+  toastTimer = setTimeout(() => {
+    el.toast.classList.add("hidden");
+  }, 2200);
+}
+
 function normalizeSymbol(value) {
   return (value || "")
     .trim()
@@ -45,6 +62,7 @@ function normalizeSymbol(value) {
 
 function renderWatchlist() {
   el.watchlist.innerHTML = "";
+  el.watchlistMeta.textContent = `${state.watchlist.length}/10 selected`;
   if (!state.watchlist.length) {
     const empty = document.createElement("p");
     empty.className = "hint";
@@ -74,20 +92,24 @@ function addSymbol(symbol) {
   const clean = normalizeSymbol(symbol);
   if (!clean) {
     setStatus("Enter a valid ticker symbol.", true);
+    showToast("Enter a valid ticker symbol");
     return;
   }
   if (state.watchlist.includes(clean)) {
     setStatus(`${clean} is already in your watchlist.`);
+    showToast(`${clean} is already selected`);
     return;
   }
   if (state.watchlist.length >= 10) {
     setStatus("Watchlist limit reached (10 symbols).", true);
+    showToast("Watchlist limit reached");
     return;
   }
 
   state.watchlist.push(clean);
   renderWatchlist();
   setStatus(`${clean} added.`);
+  showToast(`${clean} added`);
 }
 
 function renderSearchResults() {
@@ -118,6 +140,12 @@ function renderSearchResults() {
 
 let searchTimeout = null;
 async function searchStocks(query) {
+  if (!query.trim()) {
+    state.results = [];
+    renderSearchResults();
+    return;
+  }
+
   try {
     const res = await fetch(`/stocks/search?q=${encodeURIComponent(query)}&limit=12`);
     if (!res.ok) {
@@ -140,7 +168,18 @@ function activateTab(tabName) {
   });
 }
 
+function setLoadingUI(isLoading) {
+  el.loadingPanel.classList.toggle("hidden", !isLoading);
+  if (isLoading) {
+    el.outputPlaceholder.classList.add("hidden");
+    el.outputPanel.classList.add("hidden");
+  } else if (el.outputPanel.classList.contains("hidden")) {
+    el.outputPlaceholder.classList.remove("hidden");
+  }
+}
+
 function renderResult(payload) {
+  setLoadingUI(false);
   el.outputPlaceholder.classList.add("hidden");
   el.outputPanel.classList.remove("hidden");
 
@@ -151,6 +190,7 @@ function renderResult(payload) {
 
   const audioPath = payload.audio_url;
   el.audioPlayer.src = audioPath;
+  el.audioPlayer.load();
   el.audioDownload.href = audioPath;
 
   const entries = Object.entries(payload.citations || {});
@@ -172,6 +212,7 @@ async function generateBriefing() {
   if (state.loading) return;
   if (!state.watchlist.length) {
     setStatus("Add at least one ticker first.", true);
+    showToast("Add at least one ticker");
     return;
   }
 
@@ -185,6 +226,7 @@ async function generateBriefing() {
   state.loading = true;
   el.generateBtn.disabled = true;
   el.generateBtn.textContent = "Generating...";
+  setLoadingUI(true);
   setStatus("Fetching news, writing script, and generating audio...");
 
   try {
@@ -202,13 +244,29 @@ async function generateBriefing() {
     const payload = await res.json();
     renderResult(payload);
     setStatus("Briefing generated successfully.");
+    showToast("Briefing ready");
   } catch (err) {
+    setLoadingUI(false);
     setStatus(err.message || "Unexpected error while generating briefing.", true);
+    showToast("Generation failed");
   } finally {
     state.loading = false;
     el.generateBtn.disabled = false;
     el.generateBtn.textContent = "Generate morning briefing";
   }
+}
+
+function renderQuickPicks() {
+  const picks = ["AAPL", "MSFT", "NVDA", "AMZN", "TSLA", "META", "GOOGL", "SPY"];
+  el.quickPicks.innerHTML = "";
+  picks.forEach((symbol) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "quick-pick";
+    button.textContent = symbol;
+    button.addEventListener("click", () => addSymbol(symbol));
+    el.quickPicks.appendChild(button);
+  });
 }
 
 function bindEvents() {
@@ -241,6 +299,7 @@ function bindEvents() {
     state.watchlist = [];
     renderWatchlist();
     setStatus("Watchlist cleared.");
+    showToast("Watchlist cleared");
   });
 
   el.generateBtn.addEventListener("click", generateBriefing);
@@ -258,8 +317,8 @@ function bindEvents() {
 
 async function init() {
   renderWatchlist();
+  renderQuickPicks();
   bindEvents();
-  await searchStocks("");
   setStatus("Ready.");
 }
 

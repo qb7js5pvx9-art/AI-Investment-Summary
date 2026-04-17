@@ -108,9 +108,11 @@ python3 -m app.cli --tickers AAPL MSFT NVDA AMZN TSLA --hours-back 18 --target-m
 ## Web UI features included in this POC
 
 - Ticker/company search autocomplete (`/stocks/search`)
+- Quick-pick ticker buttons for common portfolios
 - Click-to-add watchlist chips with remove/clear controls
+- Watchlist count indicator and toast feedback
 - Briefing configuration controls (hours back, max articles, target minutes)
-- One-click generation flow with progress status
+- One-click generation flow with progress status + loading skeleton state
 - Built-in audio player + MP3 download link
 - Script and source citation tabs for review
 

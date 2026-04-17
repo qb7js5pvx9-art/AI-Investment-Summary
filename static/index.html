@@ -13,6 +13,10 @@
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
+    <div class="bg-orb bg-orb--one"></div>
+    <div class="bg-orb bg-orb--two"></div>
+    <div class="bg-grid"></div>
+
     <div class="app-shell">
       <header class="hero">
         <div class="hero__left">
@@ -25,12 +29,20 @@
         <div class="hero__badge">
           <p class="badge-title">POC</p>
           <p class="badge-copy">Grounded summary + natural voice output</p>
+          <div class="badge-metrics">
+            <span>Search</span>
+            <span>Summarize</span>
+            <span>Listen</span>
+          </div>
         </div>
       </header>
 
       <main class="layout">
         <section class="card controls">
-          <h2>1) Build your watchlist</h2>
+          <div class="section-head">
+            <span class="step-pill">Step 1</span>
+            <h2>Build your watchlist</h2>
+          </div>
           <p class="hint">Search by ticker or company name, then add up to 10 symbols.</p>
 
           <label for="stock-search" class="label">Ticker search</label>
@@ -40,12 +52,21 @@
           </div>
           <ul id="search-results" class="results"></ul>
 
+          <div class="quick-picks-wrap">
+            <h3>Quick picks</h3>
+            <div id="quick-picks" class="quick-picks"></div>
+          </div>
+
           <div class="watchlist-wrap">
             <h3>Your watchlist</h3>
+            <p id="watchlist-meta" class="watchlist-meta">0/10 selected</p>
             <div id="watchlist" class="chips"></div>
           </div>
 
-          <h2>2) Configure briefing</h2>
+          <div class="section-head section-head--spaced">
+            <span class="step-pill">Step 2</span>
+            <h2>Configure briefing</h2>
+          </div>
           <div class="grid">
             <label class="field">
               <span>Hours back</span>
@@ -69,9 +90,20 @@
         </section>
 
         <section class="card output">
-          <h2>3) Listen and review</h2>
+          <div class="section-head">
+            <span class="step-pill">Step 3</span>
+            <h2>Listen and review</h2>
+          </div>
           <div id="output-placeholder" class="placeholder">
-            <p>No briefing yet. Add some tickers and generate your morning podcast.</p>
+            <p class="placeholder-title">No briefing generated yet</p>
+            <p class="placeholder-copy">Add some tickers and generate your morning podcast to see script, sources, and audio here.</p>
+          </div>
+
+          <div id="loading-panel" class="loading-panel hidden" aria-live="polite">
+            <div class="loading-row shimmer"></div>
+            <div class="loading-row shimmer"></div>
+            <div class="loading-row shimmer"></div>
+            <p>Compiling overnight coverage and producing your audio briefing...</p>
           </div>
 
           <div id="output-panel" class="hidden">
@@ -100,7 +132,13 @@
           </div>
         </section>
       </main>
+
+      <footer class="footer-note">
+        <p>POC quality bar: useful morning digest fast, then iterate toward production-grade verification and personalization.</p>
+      </footer>
     </div>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
     <script src="/static/app.js"></script>
   </body>
