@@ -89,7 +89,7 @@ def synthesize_audio(script: str) -> str:
         model=settings.tts_model,
         voice=settings.tts_voice,
         input=script,
-        format="mp3",
+        response_format="mp3",
     ) as response:
         response.stream_to_file(output_path)
 
