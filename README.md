@@ -28,9 +28,16 @@ Quick POC: generate a grounded morning stock-news audio briefing (5-10 minutes) 
 ## Setup
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
+```
+
+If `python3 -m venv` fails because `python3-venv` is missing, install dependencies directly:
+
+```bash
+pip3 install --break-system-packages -r requirements.txt
 cp .env.example .env
 ```
 
@@ -87,7 +94,7 @@ Example response (trimmed):
 ## Run from CLI (no HTTP client needed)
 
 ```bash
-python -m app.cli --tickers AAPL MSFT NVDA AMZN TSLA --hours-back 18 --target-minutes 7
+python3 -m app.cli --tickers AAPL MSFT NVDA AMZN TSLA --hours-back 18 --target-minutes 7
 ```
 
 ## Files
