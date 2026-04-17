@@ -10,11 +10,13 @@ Quick POC: generate a grounded morning stock-news audio briefing (5-10 minutes) 
 - Generates natural voice MP3 audio with OpenAI TTS.
 - Exposes the output over an HTTP API so a mobile app can request and play the briefing.
 
-## Architecture (mobile-ready)
+## Architecture (mobile-ready + web UI)
 
 - **Backend (this repo):** Python + FastAPI
   - `POST /briefing` creates script + audio
   - `GET /audio/<filename>` serves generated MP3
+  - `GET /stocks/search` supports ticker/company autocomplete
+  - `GET /` serves a polished browser UI
 - **Mobile app (future):** React Native / Flutter client
   - Calls `/briefing`
   - Plays returned `audio_url`
@@ -58,6 +60,12 @@ OUTPUT_DIR=outputs
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+Open the app UI in your browser:
+
+```bash
+http://localhost:8000/
+```
+
 Health check:
 
 ```bash
@@ -97,14 +105,27 @@ Example response (trimmed):
 python3 -m app.cli --tickers AAPL MSFT NVDA AMZN TSLA --hours-back 18 --target-minutes 7
 ```
 
+## Web UI features included in this POC
+
+- Ticker/company search autocomplete (`/stocks/search`)
+- Click-to-add watchlist chips with remove/clear controls
+- Briefing configuration controls (hours back, max articles, target minutes)
+- One-click generation flow with progress status
+- Built-in audio player + MP3 download link
+- Script and source citation tabs for review
+
 ## Files
 
 - `app/main.py` - FastAPI app
+- `app/stocks.py` - stock dataset + ticker/company search logic
 - `app/service.py` - end-to-end orchestration
 - `app/news.py` - NewsAPI fetch + basic relevance mapping
 - `app/briefing.py` - script generation + TTS audio synthesis
 - `app/cli.py` - command-line entrypoint
 - `app/models.py` - request/response models
+- `static/index.html` - web UI markup
+- `static/styles.css` - web UI styling
+- `static/app.js` - web UI client logic
 
 ## Notes and limitations
 

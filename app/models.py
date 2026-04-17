@@ -27,3 +27,7 @@ class BriefingResponse(BaseModel):
     citations: dict[str, str]
     audio_file: str
     audio_url: str
+
+
+class StockSearchResponse(BaseModel):
+    results: list[dict[str, str]]
