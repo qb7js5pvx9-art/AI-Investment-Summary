@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Morning Briefing Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb bg-orb--one"></div>
+    <div class="bg-orb bg-orb--two"></div>
+    <div class="bg-grid"></div>
+
+    <div class="app-shell">
+      <header class="hero">
+        <div class="hero__left">
+          <p class="eyebrow">Morning market intelligence</p>
+          <h1>Daily Stock Briefing Podcast</h1>
+          <p class="subtitle">
+            Pick your watchlist, scan overnight news, and get a concise 5-10 minute audio briefing with sources.
+          </p>
+        </div>
+        <div class="hero__badge">
+          <p class="badge-title">POC</p>
+          <p class="badge-copy">Grounded summary + natural voice output</p>
+          <div class="badge-metrics">
+            <span>Search</span>
+            <span>Summarize</span>
+            <span>Listen</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="card controls">
+          <div class="section-head">
+            <span class="step-pill">Step 1</span>
+            <h2>Build your watchlist</h2>
+          </div>
+          <p class="hint">Search by ticker or company name, then add up to 10 symbols.</p>
+
+          <label for="stock-search" class="label">Ticker search</label>
+          <div class="search-box">
+            <input id="stock-search" type="text" placeholder="Type AAPL, Tesla, NVDA..." autocomplete="off" />
+            <button id="add-manual" class="btn btn--ghost" type="button">Add typed ticker</button>
+          </div>
+          <ul id="search-results" class="results"></ul>
+
+          <div class="quick-picks-wrap">
+            <h3>Quick picks</h3>
+            <div id="quick-picks" class="quick-picks"></div>
+          </div>
+
+          <div class="watchlist-wrap">
+            <h3>Your watchlist</h3>
+            <p id="watchlist-meta" class="watchlist-meta">0/10 selected</p>
+            <div id="watchlist" class="chips"></div>
+          </div>
+
+          <div class="section-head section-head--spaced">
+            <span class="step-pill">Step 2</span>
+            <h2>Configure briefing</h2>
+          </div>
+          <div class="grid">
+            <label class="field">
+              <span>Hours back</span>
+              <input id="hours-back" type="number" min="1" max="72" value="18" />
+            </label>
+            <label class="field">
+              <span>Max articles</span>
+              <input id="max-articles" type="number" min="5" max="100" value="30" />
+            </label>
+            <label class="field">
+              <span>Target minutes</span>
+              <input id="target-minutes" type="number" min="3" max="15" value="7" />
+            </label>
+          </div>
+
+          <div class="actions">
+            <button id="generate-btn" class="btn btn--primary" type="button">Generate morning briefing</button>
+            <button id="clear-btn" class="btn btn--ghost" type="button">Clear watchlist</button>
+          </div>
+          <p id="status" class="status"></p>
+        </section>
+
+        <section class="card output">
+          <div class="section-head">
+            <span class="step-pill">Step 3</span>
+            <h2>Listen and review</h2>
+          </div>
+          <div id="output-placeholder" class="placeholder">
+            <p class="placeholder-title">No briefing generated yet</p>
+            <p class="placeholder-copy">Add some tickers and generate your morning podcast to see script, sources, and audio here.</p>
+          </div>
+
+          <div id="loading-panel" class="loading-panel hidden" aria-live="polite">
+            <div class="loading-row shimmer"></div>
+            <div class="loading-row shimmer"></div>
+            <div class="loading-row shimmer"></div>
+            <p>Compiling overnight coverage and producing your audio briefing...</p>
+          </div>
+
+          <div id="output-panel" class="hidden">
+            <div class="summary-meta">
+              <p><strong>Generated:</strong> <span id="generated-at">-</span></p>
+              <p><strong>Articles used:</strong> <span id="article-count">-</span></p>
+              <p><strong>Watchlist:</strong> <span id="tickers-used">-</span></p>
+            </div>
+
+            <div class="audio-wrap">
+              <audio id="audio-player" controls preload="none"></audio>
+              <a id="audio-download" class="btn btn--ghost" href="#" download>Download MP3</a>
+            </div>
+
+            <div class="tabs">
+              <button class="tab is-active" data-tab="script" type="button">Script</button>
+              <button class="tab" data-tab="sources" type="button">Sources</button>
+            </div>
+
+            <div id="tab-script" class="tab-panel is-active">
+              <pre id="script-text" class="script"></pre>
+            </div>
+            <div id="tab-sources" class="tab-panel">
+              <ul id="source-list" class="sources"></ul>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer-note">
+        <p>POC quality bar: useful morning digest fast, then iterate toward production-grade verification and personalization.</p>
+      </footer>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
