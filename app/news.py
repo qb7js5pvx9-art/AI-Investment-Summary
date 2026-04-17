@@ -7,9 +7,10 @@ import httpx
 
 from app.config import get_settings
 from app.models import Article
+from app.stocks import get_company_name
 
 
-def _build_query(tickers: Iterable[str]) -> str:
+def _build_query(tickers: Iterable[str], include_company_names: bool = True) -> str:
     # Include symbol and common prefixed form to broaden match recall.
     parts = []
     for ticker in tickers:
@@ -18,14 +19,24 @@ def _build_query(tickers: Iterable[str]) -> str:
             continue
         parts.append(f'"{clean}"')
         parts.append(f'"${clean}"')
+        if include_company_names:
+            company_name = get_company_name(clean)
+            if company_name:
+                parts.append(f'"{company_name}"')
     return " OR ".join(parts)
 
 
-async def fetch_articles(tickers: list[str], hours_back: int, max_articles: int) -> list[Article]:
+async def _fetch_articles_once(
+    *,
+    tickers: list[str],
+    hours_back: int,
+    max_articles: int,
+    include_company_names: bool,
+) -> list[Article]:
     settings = get_settings()
     since = datetime.now(tz=timezone.utc) - timedelta(hours=hours_back)
     params = {
-        "q": _build_query(tickers),
+        "q": _build_query(tickers, include_company_names=include_company_names),
         "sortBy": "publishedAt",
         "language": "en",
         "pageSize": max_articles,
@@ -68,3 +79,35 @@ async def fetch_articles(tickers: list[str], hours_back: int, max_articles: int)
         articles.append(article)
 
     return articles
+
+
+async def fetch_articles(tickers: list[str], hours_back: int, max_articles: int) -> list[Article]:
+    """
+    Try a narrow overnight query first, then progressively widen if empty.
+    """
+    attempts = [
+        # Overnight, richest query.
+        {"hours_back": hours_back, "include_company_names": True},
+        # Wider lookback if low overnight coverage.
+        {"hours_back": max(hours_back, 36), "include_company_names": True},
+        # Symbol-only fallback for ambiguous company names.
+        {"hours_back": max(hours_back, 48), "include_company_names": False},
+    ]
+    seen_urls: set[str] = set()
+    merged: list[Article] = []
+    for attempt in attempts:
+        batch = await _fetch_articles_once(
+            tickers=tickers,
+            hours_back=attempt["hours_back"],
+            max_articles=max_articles,
+            include_company_names=attempt["include_company_names"],
+        )
+        for article in batch:
+            if article.url and article.url in seen_urls:
+                continue
+            if article.url:
+                seen_urls.add(article.url)
+            merged.append(article)
+        if len(merged) >= min(max_articles, 10):
+            break
+    return merged[:max_articles]

@@ -120,6 +120,13 @@ POPULAR_STOCKS: list[StockEntry] = [
 ]
 
 
+SYMBOL_TO_NAME = {entry.symbol.upper(): entry.name for entry in POPULAR_STOCKS}
+
+
+def get_company_name(symbol: str) -> str:
+    return SYMBOL_TO_NAME.get(symbol.strip().upper(), "")
+
+
 def search_stocks(query: str, limit: int = 12) -> list[dict[str, str]]:
     needle = query.strip().upper()
     if not needle:

@@ -247,7 +247,11 @@ async function generateBriefing() {
     showToast("Briefing ready");
   } catch (err) {
     setLoadingUI(false);
-    setStatus(err.message || "Unexpected error while generating briefing.", true);
+    const rawMessage = err.message || "Unexpected error while generating briefing.";
+    const friendlyMessage = rawMessage.includes("No relevant articles found")
+      ? "No matching coverage found yet. Try adding large-cap tickers or increasing hours back to 36-48."
+      : rawMessage;
+    setStatus(friendlyMessage, true);
     showToast("Generation failed");
   } finally {
     state.loading = false;
