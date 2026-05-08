@@ -142,6 +142,9 @@ async def build_daily_brief(req: DailyBriefRequest) -> DailyBriefResponse:
     try:
         payload, source_links = generate_daily_brief(
             listener_name=req.listener_name.strip(),
+            occupation=req.occupation.strip(),
+            investor_type=req.investor_type.strip(),
+            app_use=req.app_use.strip(),
             portfolio=normalized_portfolio,
             portfolio_quotes=portfolio_quotes,
             general_category=req.general_category,

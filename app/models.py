@@ -68,6 +68,9 @@ class SourceLink(BaseModel):
 
 class DailyBriefRequest(BaseModel):
     listener_name: str = Field(default="Investor", min_length=1, max_length=60)
+    occupation: str = Field(default="Professional", min_length=1, max_length=80)
+    investor_type: str = Field(default="Retail investor", min_length=1, max_length=80)
+    app_use: str = Field(default="alarm", min_length=1, max_length=40)
     portfolio: list[PortfolioSecurity] = Field(min_length=1, max_length=5)
     general_category: str = Field(default="macro", min_length=2, max_length=40)
     notification_time: str = Field(default="07:00", min_length=3, max_length=10)

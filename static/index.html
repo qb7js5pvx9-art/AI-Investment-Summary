@@ -14,50 +14,153 @@
   </head>
   <body>
     <div class="app-background"></div>
-    <main class="phone-shell">
-      <header class="topbar">
+    <main class="app-phone">
+      <header class="app-top">
         <div>
-          <p class="eyebrow">Morning Brief MVP</p>
-          <h1>Your personalised market assistant</h1>
+          <p class="app-title">Today's Briefing</p>
+          <p id="brief-date" class="app-date">-</p>
         </div>
         <button id="notify-btn" class="icon-btn" type="button" title="Ask for notifications">🔔</button>
       </header>
 
-      <section class="card card--setup">
-        <h2>Setup (accounts next)</h2>
-        <p class="subtle">Account creation is coming after this POC. Configure your brief below.</p>
-        <div class="field-grid">
-          <label>
-            <span>Name</span>
-            <input id="listener-name" type="text" value="Angus" />
-          </label>
-          <label>
-            <span>General category</span>
-            <select id="general-category">
-              <option value="macro">Macro</option>
-              <option value="uk-politics">UK politics</option>
-              <option value="sport">Sport</option>
-              <option value="tech">Tech</option>
-              <option value="energy">Energy</option>
-            </select>
-          </label>
-          <label>
-            <span>Notification time</span>
-            <input id="notification-time" type="time" value="07:00" />
-          </label>
-          <label class="toggle">
-            <span>Use as alarm mode</span>
-            <input id="alarm-mode" type="checkbox" />
-          </label>
+      <section class="screen is-active" data-screen="briefings">
+        <div class="hero-player">
+          <p id="brief-greeting-title" class="hero-greeting">Good morning</p>
+          <p id="brief-subtitle" class="hero-subtitle">Here's your personalised market call briefing.</p>
+
+          <div class="audio-ring">
+            <div class="ring-core">
+              <p id="est-length">--:--</p>
+              <span>Estimated length</span>
+            </div>
+          </div>
+
+          <div class="quick-stats">
+            <div><span id="stat-portfolio">0</span> portfolio updates</div>
+            <div><span id="stat-general">0</span> general update</div>
+          </div>
+
+          <audio id="audio-player" controls preload="none"></audio>
+
+          <div class="hero-actions">
+            <button id="generate-btn" class="btn btn--primary" type="button">Generate daily brief</button>
+            <button id="regen-btn" class="btn btn--secondary" type="button">Regenerate</button>
+            <a id="audio-download" class="btn btn--ghost" href="#" download>Download</a>
+          </div>
+          <p id="status" class="status"></p>
+        </div>
+
+        <div id="loading-panel" class="loading hidden">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <p>Generating your brief...</p>
+        </div>
+
+        <div class="info-card">
+          <h3>Quote of the day</h3>
+          <p id="quote-of-day">-</p>
+        </div>
+        <div class="info-card">
+          <h3>Audio tip</h3>
+          <p id="speaker-tip">Connect to an Alexa or speaker for the best morning experience.</p>
+          <p id="usage-disclaimer" class="subtle">Informational only. Not financial advice.</p>
         </div>
       </section>
 
-      <section class="card">
-        <div class="card-head">
-          <h2>Create portfolio (5 securities)</h2>
-          <p id="portfolio-meta">0 / 5</p>
+      <section class="screen" data-screen="show-notes">
+        <div class="white-card">
+          <div class="screen-head">
+            <h2>Show Notes</h2>
+            <p id="show-notes-date">-</p>
+          </div>
+          <div class="segment">
+            <button class="segment-btn is-active" type="button" data-notes-tab="summary">Summary</button>
+            <button class="segment-btn" type="button" data-notes-tab="articles">Articles</button>
+          </div>
+
+          <div id="notes-summary" class="notes-panel is-active">
+            <h3>Summary</h3>
+            <ul id="summary-list" class="bullet-list"></ul>
+
+            <div class="tone-box">
+              <p>Overall tone</p>
+              <div class="tone-grid">
+                <span>Positive <strong id="tone-positive">0</strong></span>
+                <span>Neutral <strong id="tone-neutral">0</strong></span>
+                <span>Negative <strong id="tone-negative">0</strong></span>
+                <span>Mixed <strong id="tone-mixed">0</strong></span>
+              </div>
+            </div>
+
+            <h3>Portfolio updates</h3>
+            <div id="security-notes" class="stack"></div>
+
+            <h3>General update</h3>
+            <ul id="general-notes" class="bullet-list"></ul>
+          </div>
+
+          <div id="notes-articles" class="notes-panel">
+            <div id="source-links-notes" class="stack"></div>
+          </div>
         </div>
-        <div class="search-stack">
+      </section>
+
+      <section class="screen" data-screen="articles">
+        <div class="white-card">
+          <div class="screen-head">
+            <h2>Articles</h2>
+            <p id="articles-count">0 articles</p>
+          </div>
+          <div class="segment">
+            <button class="segment-btn is-active article-filter" type="button" data-filter="all">All</button>
+            <button class="segment-btn article-filter" type="button" data-filter="portfolio">Portfolio</button>
+            <button class="segment-btn article-filter" type="button" data-filter="macro">Macro</button>
+          </div>
+          <div id="articles-list" class="stack"></div>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="portfolio">
+        <div class="white-card">
+          <h2>MVP setup</h2>
+          <p class="subtle dark">Accounts are next. These fields are local for now.</p>
+          <div class="field-grid">
+            <label><span>Name</span><input id="listener-name" type="text" value="Angus" /></label>
+            <label><span>Occupation</span><input id="occupation" type="text" value="Finance analyst" /></label>
+            <label>
+              <span>Investor type</span>
+              <select id="investor-type">
+                <option>Retail investor</option>
+                <option>Long-term investor</option>
+                <option>Active trader</option>
+              </select>
+            </label>
+            <label>
+              <span>App use</span>
+              <select id="app-use">
+                <option value="alarm">Alarm briefing</option>
+                <option value="morning-brief">Morning digest</option>
+              </select>
+            </label>
+            <label>
+              <span>General category</span>
+              <select id="general-category">
+                <option value="macro">Macro</option>
+                <option value="uk-politics">UK politics</option>
+                <option value="sport">Sport</option>
+                <option value="tech">Tech</option>
+                <option value="energy">Energy</option>
+              </select>
+            </label>
+            <label><span>Notification time</span><input id="notification-time" type="time" value="07:00" /></label>
+            <label class="toggle"><span>Alarm mode</span><input id="alarm-mode" type="checkbox" checked /></label>
+          </div>
+
+          <div class="portfolio-head">
+            <h3>Create Portfolio (5 securities)</h3>
+            <p id="portfolio-meta">0 / 5</p>
+          </div>
           <input id="stock-search" type="text" placeholder="Search ticker or company..." autocomplete="off" />
           <div class="search-row">
             <select id="asset-type">
@@ -65,75 +168,46 @@
               <option value="etf">ETF</option>
               <option value="bond">Bond</option>
             </select>
-            <button id="add-manual" class="btn btn--secondary" type="button">Add security</button>
+            <button id="add-manual" class="btn btn--secondary" type="button">Add</button>
             <button id="clear-portfolio" class="btn btn--ghost" type="button">Clear</button>
           </div>
           <ul id="search-results" class="results"></ul>
-        </div>
-        <div id="portfolio-list" class="portfolio-list"></div>
-      </section>
+          <div id="portfolio-list" class="stack"></div>
 
-      <section class="card card--brief">
-        <div class="brief-header">
-          <p id="brief-date">Today's Briefing</p>
-          <strong id="brief-name">Good morning</strong>
-        </div>
-        <div id="loading-panel" class="loading hidden">
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <p>Generating your daily brief...</p>
-        </div>
-        <div id="brief-content" class="brief-content hidden">
-          <p id="brief-greeting" class="copy"></p>
-          <audio id="audio-player" controls preload="none"></audio>
-          <p id="quote-of-day" class="quote"></p>
-          <div class="cta-row">
-            <a id="audio-download" class="btn btn--ghost" href="#" download>Download audio</a>
-            <button id="regen-btn" class="btn btn--secondary" type="button">Regenerate</button>
+          <div class="rules">
+            <h3>Content rules</h3>
+            <ul class="bullet-list">
+              <li>Neutral tone. No buy, sell, or hold recommendations.</li>
+              <li>Explains why each news item may affect each security.</li>
+              <li>No guarantees. Informational only, not financial advice.</li>
+            </ul>
+            <h3>iOS alarm shortcuts</h3>
+            <ol id="alarm-steps" class="bullet-list numbered"></ol>
           </div>
-        </div>
-        <button id="generate-btn" class="btn btn--primary btn--full" type="button">Generate daily brief</button>
-        <p id="status" class="status"></p>
-      </section>
-
-      <section class="card">
-        <div class="tabs">
-          <button class="tab is-active" type="button" data-tab="summary">Show notes</button>
-          <button class="tab" type="button" data-tab="articles">Articles</button>
-          <button class="tab" type="button" data-tab="rules">Rules</button>
-        </div>
-        <div id="tab-summary" class="tab-panel is-active">
-          <h3>Summary</h3>
-          <ul id="summary-list" class="bullet-list"></ul>
-          <h3>Portfolio updates</h3>
-          <div id="security-notes" class="stack"></div>
-          <h3>General update</h3>
-          <ul id="general-notes" class="bullet-list"></ul>
-        </div>
-        <div id="tab-articles" class="tab-panel">
-          <h3>Source links</h3>
-          <div id="source-links" class="stack"></div>
-        </div>
-        <div id="tab-rules" class="tab-panel">
-          <ul class="bullet-list">
-            <li>Neutral tone only. No buy/sell/hold recommendations.</li>
-            <li>Not financial advice. No outcomes are guaranteed.</li>
-            <li>Every security update explains why the news may affect it.</li>
-            <li>USP: Automates financial news for retail investors and saves time every morning.</li>
-          </ul>
-          <h3>Alarm guidance (iOS shortcuts)</h3>
-          <ol id="alarm-steps" class="bullet-list numbered"></ol>
-          <p id="speaker-tip" class="subtle"></p>
         </div>
       </section>
 
       <nav class="bottom-nav">
-        <button class="nav-item is-active" type="button">Briefings</button>
-        <button class="nav-item" type="button">Portfolio</button>
-        <button class="nav-item" type="button">Profile</button>
+        <button class="nav-item is-active" type="button" data-screen-target="briefings">Briefings</button>
+        <button class="nav-item" type="button" data-screen-target="show-notes">Show notes</button>
+        <button class="nav-item" type="button" data-screen-target="articles">Articles</button>
+        <button class="nav-item" type="button" data-screen-target="portfolio">Portfolio</button>
       </nav>
     </main>
+
+    <div id="article-sheet" class="article-sheet hidden">
+      <div class="sheet-card">
+        <button id="close-article-sheet" class="icon-btn" type="button">✕</button>
+        <p id="article-tag" class="article-tag">-</p>
+        <h2 id="article-title">-</h2>
+        <p id="article-meta" class="subtle dark">-</p>
+        <h3>Why it matters for you</h3>
+        <p id="article-why" class="sheet-copy">-</p>
+        <h3>Key points</h3>
+        <ul id="article-points" class="bullet-list"></ul>
+        <a id="article-link" class="btn btn--primary" href="#" target="_blank" rel="noopener noreferrer">View full article</a>
+      </div>
+    </div>
 
     <div id="toast" class="toast hidden"></div>
     <script src="/static/app.js"></script>

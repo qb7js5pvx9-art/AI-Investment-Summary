@@ -92,6 +92,9 @@ def generate_script(articles: list[Article], tickers: list[str], target_minutes:
 def generate_daily_brief(
     *,
     listener_name: str,
+    occupation: str,
+    investor_type: str,
+    app_use: str,
     portfolio: list[PortfolioSecurity],
     portfolio_quotes: list[PortfolioQuote],
     general_category: str,
@@ -122,6 +125,9 @@ def generate_daily_brief(
     )
     user_prompt = (
         f"Listener name: {listener_name}\n"
+        f"Occupation: {occupation}\n"
+        f"Investor type: {investor_type}\n"
+        f"App use mode: {app_use}\n"
         f"Notification time: {notification_time}\n"
         f"General news category: {general_category}\n"
         f"Target audio length: {target_minutes} minutes\n\n"
