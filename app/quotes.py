@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 import httpx
 
 
@@ -17,10 +19,23 @@ async def fetch_market_quotes(tickers: list[str]) -> dict[str, dict[str, float |
     url = "https://query1.finance.yahoo.com/v7/finance/quote"
     params = {"symbols": symbols}
 
-    async with httpx.AsyncClient(timeout=20) as client:
-        response = await client.get(url, params=params)
-        response.raise_for_status()
-        payload = response.json()
+    payload: dict = {}
+    for attempt in range(3):
+        try:
+            async with httpx.AsyncClient(timeout=20) as client:
+                response = await client.get(url, params=params)
+                response.raise_for_status()
+                payload = response.json()
+            break
+        except httpx.HTTPStatusError as exc:
+            # Yahoo can intermittently rate-limit this unauthenticated endpoint.
+            # For MVP we degrade gracefully and proceed without live quote fields.
+            if exc.response.status_code == 429 and attempt < 2:
+                await asyncio.sleep(0.5 * (2**attempt))
+                continue
+            return {}
+        except httpx.HTTPError:
+            return {}
 
     raw_results = payload.get("quoteResponse", {}).get("result", [])
     out: dict[str, dict[str, float | str | None]] = {}
