@@ -1,115 +1,126 @@
 const state = {
-  watchlist: ["AAPL", "MSFT", "NVDA"],
+  portfolio: [
+    { ticker: "AAPL", asset_type: "stock", name: "Apple Inc." },
+    { ticker: "MSFT", asset_type: "stock", name: "Microsoft Corporation" },
+  ],
   results: [],
   loading: false,
 };
 
 const el = {
+  listenerName: document.getElementById("listener-name"),
+  generalCategory: document.getElementById("general-category"),
+  notificationTime: document.getElementById("notification-time"),
+  alarmMode: document.getElementById("alarm-mode"),
+  notifyBtn: document.getElementById("notify-btn"),
   searchInput: document.getElementById("stock-search"),
-  searchResults: document.getElementById("search-results"),
-  quickPicks: document.getElementById("quick-picks"),
-  watchlist: document.getElementById("watchlist"),
-  watchlistMeta: document.getElementById("watchlist-meta"),
+  assetType: document.getElementById("asset-type"),
   addManual: document.getElementById("add-manual"),
-  hoursBack: document.getElementById("hours-back"),
-  maxArticles: document.getElementById("max-articles"),
-  targetMinutes: document.getElementById("target-minutes"),
+  clearPortfolio: document.getElementById("clear-portfolio"),
+  searchResults: document.getElementById("search-results"),
+  portfolioList: document.getElementById("portfolio-list"),
+  portfolioMeta: document.getElementById("portfolio-meta"),
   generateBtn: document.getElementById("generate-btn"),
-  clearBtn: document.getElementById("clear-btn"),
-  status: document.getElementById("status"),
-  outputPlaceholder: document.getElementById("output-placeholder"),
+  regenBtn: document.getElementById("regen-btn"),
   loadingPanel: document.getElementById("loading-panel"),
-  outputPanel: document.getElementById("output-panel"),
-  toast: document.getElementById("toast"),
-  generatedAt: document.getElementById("generated-at"),
-  articleCount: document.getElementById("article-count"),
-  tickersUsed: document.getElementById("tickers-used"),
+  briefContent: document.getElementById("brief-content"),
+  briefDate: document.getElementById("brief-date"),
+  briefName: document.getElementById("brief-name"),
+  briefGreeting: document.getElementById("brief-greeting"),
   audioPlayer: document.getElementById("audio-player"),
   audioDownload: document.getElementById("audio-download"),
-  scriptText: document.getElementById("script-text"),
-  sourceList: document.getElementById("source-list"),
+  quoteOfDay: document.getElementById("quote-of-day"),
+  status: document.getElementById("status"),
+  summaryList: document.getElementById("summary-list"),
+  securityNotes: document.getElementById("security-notes"),
+  generalNotes: document.getElementById("general-notes"),
+  sourceLinks: document.getElementById("source-links"),
+  alarmSteps: document.getElementById("alarm-steps"),
+  speakerTip: document.getElementById("speaker-tip"),
+  toast: document.getElementById("toast"),
   tabs: Array.from(document.querySelectorAll(".tab")),
   tabPanels: {
-    script: document.getElementById("tab-script"),
-    sources: document.getElementById("tab-sources"),
+    summary: document.getElementById("tab-summary"),
+    articles: document.getElementById("tab-articles"),
+    rules: document.getElementById("tab-rules"),
   },
 };
 
+let searchTimeout = null;
+let toastTimeout = null;
+
 function setStatus(message, isError = false) {
   el.status.textContent = message;
-  el.status.classList.toggle("is-error", isError);
+  el.status.classList.toggle("error", isError);
 }
 
-let toastTimer = null;
-function showToast(message) {
-  if (!message) return;
+function toast(message) {
   el.toast.textContent = message;
   el.toast.classList.remove("hidden");
-  if (toastTimer) {
-    clearTimeout(toastTimer);
-  }
-  toastTimer = setTimeout(() => {
-    el.toast.classList.add("hidden");
-  }, 2200);
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.toast.classList.add("hidden"), 2400);
 }
 
-function normalizeSymbol(value) {
+function normalizeTicker(value) {
   return (value || "")
     .trim()
     .toUpperCase()
     .replace(/[^A-Z0-9.]/g, "");
 }
 
-function renderWatchlist() {
-  el.watchlist.innerHTML = "";
-  el.watchlistMeta.textContent = `${state.watchlist.length}/10 selected`;
-  if (!state.watchlist.length) {
-    const empty = document.createElement("p");
-    empty.className = "hint";
-    empty.textContent = "No symbols yet.";
-    el.watchlist.appendChild(empty);
+function renderPortfolio() {
+  el.portfolioList.innerHTML = "";
+  el.portfolioMeta.textContent = `${state.portfolio.length} / 5`;
+  if (!state.portfolio.length) {
+    const p = document.createElement("p");
+    p.className = "subtle";
+    p.textContent = "Add 5 securities to continue.";
+    el.portfolioList.appendChild(p);
     return;
   }
-
-  state.watchlist.forEach((symbol) => {
-    const chip = document.createElement("div");
-    chip.className = "chip";
-    chip.innerHTML = `<span>${symbol}</span>`;
+  state.portfolio.forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "portfolio-item";
+    row.innerHTML = `
+      <div>
+        <p><strong>${item.ticker}</strong> <span class="pill">${item.asset_type}</span></p>
+        <p>${item.name || ""}</p>
+      </div>
+    `;
     const remove = document.createElement("button");
+    remove.className = "btn btn--ghost";
     remove.type = "button";
-    remove.setAttribute("aria-label", `Remove ${symbol}`);
-    remove.textContent = "x";
+    remove.textContent = "Remove";
     remove.addEventListener("click", () => {
-      state.watchlist = state.watchlist.filter((s) => s !== symbol);
-      renderWatchlist();
+      state.portfolio = state.portfolio.filter((v) => v.ticker !== item.ticker);
+      renderPortfolio();
     });
-    chip.appendChild(remove);
-    el.watchlist.appendChild(chip);
+    row.appendChild(remove);
+    el.portfolioList.appendChild(row);
   });
 }
 
-function addSymbol(symbol) {
-  const clean = normalizeSymbol(symbol);
-  if (!clean) {
-    setStatus("Enter a valid ticker symbol.", true);
-    showToast("Enter a valid ticker symbol");
+function addSecurity(entry) {
+  const ticker = normalizeTicker(entry.ticker);
+  if (!ticker) {
+    toast("Enter a valid ticker");
     return;
   }
-  if (state.watchlist.includes(clean)) {
-    setStatus(`${clean} is already in your watchlist.`);
-    showToast(`${clean} is already selected`);
+  if (state.portfolio.some((v) => v.ticker === ticker)) {
+    toast(`${ticker} already in portfolio`);
     return;
   }
-  if (state.watchlist.length >= 10) {
-    setStatus("Watchlist limit reached (10 symbols).", true);
-    showToast("Watchlist limit reached");
+  if (state.portfolio.length >= 5) {
+    toast("Portfolio is limited to 5 securities for MVP");
     return;
   }
-
-  state.watchlist.push(clean);
-  renderWatchlist();
-  setStatus(`${clean} added.`);
-  showToast(`${clean} added`);
+  state.portfolio.push({
+    ticker,
+    asset_type: entry.asset_type || el.assetType.value,
+    name: entry.name || "",
+  });
+  renderPortfolio();
+  setStatus(`${ticker} added.`);
 }
 
 function renderSearchResults() {
@@ -118,15 +129,14 @@ function renderSearchResults() {
     el.searchResults.classList.remove("is-open");
     return;
   }
-
   state.results.forEach((item) => {
     const li = document.createElement("li");
     const button = document.createElement("button");
-    button.className = "result-item";
     button.type = "button";
-    button.innerHTML = `<span><strong>${item.symbol}</strong></span><span class="result-name">${item.name}</span>`;
+    button.className = "result-item";
+    button.innerHTML = `<strong>${item.symbol}</strong><br /><small>${item.name}</small>`;
     button.addEventListener("click", () => {
-      addSymbol(item.symbol);
+      addSecurity({ ticker: item.symbol, name: item.name });
       el.searchInput.value = "";
       state.results = [];
       renderSearchResults();
@@ -134,196 +144,202 @@ function renderSearchResults() {
     li.appendChild(button);
     el.searchResults.appendChild(li);
   });
-
   el.searchResults.classList.add("is-open");
 }
 
-let searchTimeout = null;
 async function searchStocks(query) {
-  if (!query.trim()) {
+  const q = query.trim();
+  if (!q) {
     state.results = [];
     renderSearchResults();
     return;
   }
-
   try {
-    const res = await fetch(`/stocks/search?q=${encodeURIComponent(query)}&limit=12`);
-    if (!res.ok) {
-      throw new Error("Failed to search");
-    }
+    const res = await fetch(`/stocks/search?q=${encodeURIComponent(q)}&limit=12`);
+    if (!res.ok) throw new Error("Search failed");
     const payload = await res.json();
     state.results = payload.results || [];
     renderSearchResults();
   } catch (err) {
-    state.results = [];
-    renderSearchResults();
-    setStatus("Stock search failed. Check server logs.", true);
+    setStatus("Ticker search failed.", true);
   }
 }
 
-function activateTab(tabName) {
-  el.tabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.tab === tabName));
-  Object.entries(el.tabPanels).forEach(([name, panel]) => {
-    panel.classList.toggle("is-active", name === tabName);
+function activateTab(name) {
+  el.tabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.tab === name));
+  Object.entries(el.tabPanels).forEach(([key, panel]) => panel.classList.toggle("is-active", key === name));
+}
+
+function setLoading(isLoading) {
+  state.loading = isLoading;
+  el.loadingPanel.classList.toggle("hidden", !isLoading);
+  el.generateBtn.disabled = isLoading;
+  if (!isLoading && state.portfolio.length) {
+    el.generateBtn.textContent = "Generate daily brief";
+  } else if (isLoading) {
+    el.generateBtn.textContent = "Generating...";
+  }
+}
+
+function renderSources(links = []) {
+  el.sourceLinks.innerHTML = "";
+  if (!links.length) {
+    const p = document.createElement("p");
+    p.className = "subtle";
+    p.textContent = "No source links yet.";
+    el.sourceLinks.appendChild(p);
+    return;
+  }
+  links.forEach((link) => {
+    const card = document.createElement("div");
+    card.className = "source-card";
+    card.innerHTML = `
+      <h4>${link.source_id} · ${link.title || "Untitled"}</h4>
+      <p>${link.source} · ${new Date(link.published_at).toLocaleString()}</p>
+      <p><a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.url}</a></p>
+    `;
+    el.sourceLinks.appendChild(card);
   });
 }
 
-function setLoadingUI(isLoading) {
-  el.loadingPanel.classList.toggle("hidden", !isLoading);
-  if (isLoading) {
-    el.outputPlaceholder.classList.add("hidden");
-    el.outputPanel.classList.add("hidden");
-  } else if (el.outputPanel.classList.contains("hidden")) {
-    el.outputPlaceholder.classList.remove("hidden");
-  }
-}
-
-function renderResult(payload) {
-  setLoadingUI(false);
-  el.outputPlaceholder.classList.add("hidden");
-  el.outputPanel.classList.remove("hidden");
-
-  el.generatedAt.textContent = new Date(payload.generated_at).toLocaleString();
-  el.articleCount.textContent = String(payload.article_count);
-  el.tickersUsed.textContent = (payload.tickers || []).join(", ");
-  el.scriptText.textContent = payload.script || "";
-
-  const audioPath = payload.audio_url;
-  el.audioPlayer.src = audioPath;
+function renderDailyBrief(payload) {
+  el.briefContent.classList.remove("hidden");
+  el.briefDate.textContent = new Date(payload.generated_at).toLocaleDateString();
+  el.briefName.textContent = `${payload.listener_name}'s daily brief`;
+  el.briefGreeting.textContent = payload.greeting || "";
+  el.quoteOfDay.textContent = `Quote of the day: ${payload.quote_of_day || ""}`;
+  el.audioPlayer.src = payload.audio_url;
   el.audioPlayer.load();
-  el.audioDownload.href = audioPath;
+  el.audioDownload.href = payload.audio_url;
 
-  const entries = Object.entries(payload.citations || {});
-  el.sourceList.innerHTML = "";
-  if (!entries.length) {
+  el.summaryList.innerHTML = "";
+  (payload.show_notes_summary || []).forEach((line) => {
     const li = document.createElement("li");
-    li.textContent = "No citations returned.";
-    el.sourceList.appendChild(li);
-  } else {
-    entries.forEach(([sid, url]) => {
-      const li = document.createElement("li");
-      li.innerHTML = `<strong>${sid}</strong><br /><a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-      el.sourceList.appendChild(li);
-    });
-  }
+    li.textContent = line;
+    el.summaryList.appendChild(li);
+  });
+
+  el.securityNotes.innerHTML = "";
+  (payload.security_impact_notes || []).forEach((note) => {
+    const card = document.createElement("div");
+    card.className = "note-card";
+    card.innerHTML = `
+      <h4>${note.ticker} <span class="pill">${note.asset_type}</span></h4>
+      <p>${note.update}</p>
+      <p><strong>Why it matters:</strong> ${note.why_it_matters}</p>
+      <span class="sentiment ${note.sentiment}">${note.sentiment}</span>
+    `;
+    el.securityNotes.appendChild(card);
+  });
+
+  el.generalNotes.innerHTML = "";
+  (payload.general_news_notes || []).forEach((line) => {
+    const li = document.createElement("li");
+    li.textContent = line;
+    el.generalNotes.appendChild(li);
+  });
+
+  renderSources(payload.source_links || []);
+  el.speakerTip.textContent = payload.speaker_tip || "";
+  el.alarmSteps.innerHTML = "";
+  (payload.ios_alarm_steps || []).forEach((step) => {
+    const li = document.createElement("li");
+    li.textContent = step;
+    el.alarmSteps.appendChild(li);
+  });
 }
 
-async function generateBriefing() {
+async function generateDailyBrief() {
   if (state.loading) return;
-  if (!state.watchlist.length) {
-    setStatus("Add at least one ticker first.", true);
-    showToast("Add at least one ticker");
+  if (state.portfolio.length !== 5) {
+    setStatus("MVP requires exactly 5 securities.", true);
+    toast("Please add exactly 5 securities");
     return;
   }
 
-  const body = {
-    tickers: state.watchlist,
-    hours_back: Number(el.hoursBack.value),
-    max_articles: Number(el.maxArticles.value),
-    target_minutes: Number(el.targetMinutes.value),
+  const request = {
+    listener_name: el.listenerName.value.trim() || "Investor",
+    portfolio: state.portfolio.map((item) => ({ ticker: item.ticker, asset_type: item.asset_type })),
+    general_category: el.generalCategory.value,
+    notification_time: el.notificationTime.value || "07:00",
+    wants_alarm_mode: Boolean(el.alarmMode.checked),
+    hours_back: 24,
+    max_articles: 36,
+    target_minutes: 6,
   };
 
-  state.loading = true;
-  el.generateBtn.disabled = true;
-  el.generateBtn.textContent = "Generating...";
-  setLoadingUI(true);
-  setStatus("Fetching news, writing script, and generating audio...");
-
+  setLoading(true);
+  setStatus("Building your personalised daily brief...");
   try {
-    const res = await fetch("/briefing", {
+    const res = await fetch("/daily-brief-mvp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(request),
     });
-
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Failed to generate briefing");
+      throw new Error(err.detail || "Failed to generate daily brief");
     }
-
     const payload = await res.json();
-    renderResult(payload);
-    setStatus("Briefing generated successfully.");
-    showToast("Briefing ready");
+    renderDailyBrief(payload);
+    setStatus("Daily brief ready.");
+    toast("Briefing generated");
   } catch (err) {
-    setLoadingUI(false);
-    const rawMessage = err.message || "Unexpected error while generating briefing.";
-    const friendlyMessage = rawMessage.includes("No relevant articles found")
-      ? "No matching coverage found yet. Try adding large-cap tickers or increasing hours back to 36-48."
-      : rawMessage;
-    setStatus(friendlyMessage, true);
-    showToast("Generation failed");
+    setStatus(err.message || "Generation failed.", true);
+    toast("Generation failed");
   } finally {
-    state.loading = false;
-    el.generateBtn.disabled = false;
-    el.generateBtn.textContent = "Generate morning briefing";
+    setLoading(false);
   }
 }
 
-function renderQuickPicks() {
-  const picks = ["AAPL", "MSFT", "NVDA", "AMZN", "TSLA", "META", "GOOGL", "SPY"];
-  el.quickPicks.innerHTML = "";
-  picks.forEach((symbol) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "quick-pick";
-    button.textContent = symbol;
-    button.addEventListener("click", () => addSymbol(symbol));
-    el.quickPicks.appendChild(button);
-  });
+async function requestNotifications() {
+  if (!("Notification" in window)) {
+    toast("Browser notifications are not supported here");
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  toast(`Notification permission: ${permission}`);
 }
 
 function bindEvents() {
-  el.searchInput.addEventListener("input", (event) => {
-    const query = event.target.value.trim();
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
-    searchTimeout = setTimeout(() => searchStocks(query), 180);
+  el.searchInput.addEventListener("input", (e) => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => searchStocks(e.target.value), 200);
   });
-
-  el.searchInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      addSymbol(el.searchInput.value);
+  el.searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addSecurity({ ticker: el.searchInput.value, asset_type: el.assetType.value });
       el.searchInput.value = "";
       state.results = [];
       renderSearchResults();
     }
   });
-
   el.addManual.addEventListener("click", () => {
-    addSymbol(el.searchInput.value);
+    addSecurity({ ticker: el.searchInput.value, asset_type: el.assetType.value });
     el.searchInput.value = "";
     state.results = [];
     renderSearchResults();
   });
-
-  el.clearBtn.addEventListener("click", () => {
-    state.watchlist = [];
-    renderWatchlist();
-    setStatus("Watchlist cleared.");
-    showToast("Watchlist cleared");
+  el.clearPortfolio.addEventListener("click", () => {
+    state.portfolio = [];
+    renderPortfolio();
   });
-
-  el.generateBtn.addEventListener("click", generateBriefing);
-
-  el.tabs.forEach((tab) => {
-    tab.addEventListener("click", () => activateTab(tab.dataset.tab));
-  });
-
-  document.addEventListener("click", (event) => {
-    if (!el.searchResults.contains(event.target) && event.target !== el.searchInput) {
+  el.generateBtn.addEventListener("click", generateDailyBrief);
+  el.regenBtn.addEventListener("click", generateDailyBrief);
+  el.notifyBtn.addEventListener("click", requestNotifications);
+  el.tabs.forEach((tab) => tab.addEventListener("click", () => activateTab(tab.dataset.tab)));
+  document.addEventListener("click", (e) => {
+    if (!el.searchResults.contains(e.target) && e.target !== el.searchInput) {
       el.searchResults.classList.remove("is-open");
     }
   });
 }
 
-async function init() {
-  renderWatchlist();
-  renderQuickPicks();
+function init() {
   bindEvents();
-  setStatus("Ready.");
+  renderPortfolio();
+  setStatus("Ready. Add 5 securities and generate your daily brief.");
 }
 
 init();

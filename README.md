@@ -1,19 +1,22 @@
 # AI-Investment-Summary
 
-Quick POC: generate a grounded morning stock-news audio briefing (5-10 minutes) from overnight articles.
+Quick POC: mobile-first webapp that generates a personalized morning audio brief from portfolio + macro/general news.
 
 ## What this POC does
 
-- Accepts a list of stock tickers (e.g. `AAPL MSFT NVDA`).
-- Pulls recent articles from NewsAPI for a configurable time window.
-- Builds a citation-tagged script using OpenAI (claims are expected to include source tags like `[S3]`).
+- Accepts an MVP portfolio of exactly 5 securities (stock/ETF/bond labels).
+- Lets users choose one general news category (macro, UK politics, sport, tech, energy).
+- Pulls overnight portfolio + category articles from NewsAPI.
+- Fetches live quote snapshots (price and movement) from Yahoo Finance quote endpoint.
+- Builds a neutral, personalized daily script (no buy/sell/hold) and show notes.
 - Generates natural voice MP3 audio with OpenAI TTS.
-- Exposes the output over an HTTP API so a mobile app can request and play the briefing.
+- Exposes a mobile-style web UI and API endpoint for daily brief generation.
 
 ## Architecture (mobile-ready + web UI)
 
 - **Backend (this repo):** Python + FastAPI
-  - `POST /briefing` creates script + audio
+  - `POST /briefing` legacy script + audio endpoint
+  - `POST /daily-brief-mvp` personalized daily brief endpoint
   - `GET /audio/<filename>` serves generated MP3
   - `GET /stocks/search` supports ticker/company autocomplete
   - `GET /` serves a polished browser UI
@@ -72,16 +75,23 @@ Health check:
 curl http://localhost:8000/health
 ```
 
-Generate a briefing:
+Generate the MVP daily brief:
 
 ```bash
-curl -X POST http://localhost:8000/briefing \
+curl -X POST http://localhost:8000/daily-brief-mvp \
   -H "Content-Type: application/json" \
   -d '{
-    "tickers": ["AAPL", "MSFT", "NVDA", "AMZN", "TSLA"],
-    "hours_back": 18,
-    "max_articles": 30,
-    "target_minutes": 7
+    "listener_name": "Angus",
+    "portfolio": [
+      {"ticker": "AAPL", "asset_type": "stock"},
+      {"ticker": "MSFT", "asset_type": "stock"},
+      {"ticker": "NVDA", "asset_type": "stock"},
+      {"ticker": "SPY", "asset_type": "etf"},
+      {"ticker": "TLT", "asset_type": "bond"}
+    ],
+    "general_category": "macro",
+    "notification_time": "07:00",
+    "wants_alarm_mode": true
   }'
 ```
 
@@ -107,22 +117,23 @@ python3 -m app.cli --tickers AAPL MSFT NVDA AMZN TSLA --hours-back 18 --target-m
 
 ## Web UI features included in this POC
 
-- Ticker/company search autocomplete (`/stocks/search`)
-- Quick-pick ticker buttons for common portfolios
-- Click-to-add watchlist chips with remove/clear controls
-- Watchlist count indicator and toast feedback
-- Briefing configuration controls (hours back, max articles, target minutes)
-- One-click generation flow with progress status + loading skeleton state
-- Built-in audio player + MP3 download link
-- Script and source citation tabs for review
+- Mobile-first phone layout inspired by native briefing apps
+- Notification permission prompt + configurable notification time
+- Portfolio builder with ticker/company autocomplete (`/stocks/search`) and asset type selector
+- Exactly-5 security MVP validation flow
+- One general news category selector
+- Daily audio briefing player + download
+- Show notes with summary bullets + security impact cards + source links
+- Neutrality/financial-disclaimer rules section + iOS shortcut alarm guidance
 
 ## Files
 
 - `app/main.py` - FastAPI app
+- `app/quotes.py` - market quote lookup for price/movement snapshots
 - `app/stocks.py` - stock dataset + ticker/company search logic
 - `app/service.py` - end-to-end orchestration
-- `app/news.py` - NewsAPI fetch + basic relevance mapping
-- `app/briefing.py` - script generation + TTS audio synthesis
+- `app/news.py` - NewsAPI fetch for portfolio + general category
+- `app/briefing.py` - script generation (legacy + daily brief) + TTS audio synthesis
 - `app/cli.py` - command-line entrypoint
 - `app/models.py` - request/response models
 - `static/index.html` - web UI markup
