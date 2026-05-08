@@ -10,7 +10,7 @@ from app.models import Article
 from app.stocks import get_company_name
 
 GENERAL_NEWS_CATEGORY_QUERIES: dict[str, str] = {
-    "macro": '"inflation OR "interest rates" OR "central bank" OR "bond yields" OR "jobs report"',
+    "macro": '"inflation" OR "interest rates" OR "central bank" OR "bond yields" OR "jobs report"',
     "uk-politics": '"UK politics" OR "Westminster" OR "Bank of England" OR "budget"',
     "sport": "sport business OR media rights OR major sporting events",
     "tech": '"artificial intelligence" OR semiconductors OR cloud OR cybersecurity',
@@ -53,9 +53,13 @@ async def _fetch_articles_once(
     }
 
     async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.get(settings.newsapi_base_url, params=params)
-        response.raise_for_status()
-        payload = response.json()
+        try:
+            response = await client.get(settings.newsapi_base_url, params=params)
+            response.raise_for_status()
+            payload = response.json()
+        except httpx.HTTPError:
+            # Gracefully degrade if NewsAPI rejects/transiently fails this query.
+            return []
 
     raw_articles = payload.get("articles", [])
     articles: list[Article] = []
@@ -102,9 +106,12 @@ async def _fetch_by_query_once(*, query: str, hours_back: int, max_articles: int
     }
 
     async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.get(settings.newsapi_base_url, params=params)
-        response.raise_for_status()
-        payload = response.json()
+        try:
+            response = await client.get(settings.newsapi_base_url, params=params)
+            response.raise_for_status()
+            payload = response.json()
+        except httpx.HTTPError:
+            return []
 
     raw_articles = payload.get("articles", [])
     articles: list[Article] = []
