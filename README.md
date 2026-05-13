@@ -35,26 +35,13 @@ Quick POC: mobile-first webapp that generates a personalized morning audio brief
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
+pip install -r requirements.txtv
 ```
 
 If `python3 -m venv` fails because `python3-venv` is missing, install dependencies directly:
 
 ```bash
 pip3 install --break-system-packages -r requirements.txt
-cp .env.example .env
-```
-
-Fill `.env`:
-
-```env
-OPENAI_API_KEY=your_openai_key
-NEWSAPI_KEY=your_newsapi_key
-SUMMARY_MODEL=gpt-4.1-mini
-TTS_MODEL=gpt-4o-mini-tts
-TTS_VOICE=alloy
-OUTPUT_DIR=outputs
 ```
 
 ## Run API server
