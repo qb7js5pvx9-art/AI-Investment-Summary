@@ -97,6 +97,7 @@ POPULAR_STOCKS: list[StockEntry] = [
     StockEntry("MDT", "Medtronic plc"),
     StockEntry("CVS", "CVS Health Corporation"),
     StockEntry("BKNG", "Booking Holdings Inc."),
+    StockEntry("TRIP", "Tripadvisor, Inc."),
     StockEntry("MAR", "Marriott International, Inc."),
     StockEntry("HLT", "Hilton Worldwide Holdings Inc."),
     StockEntry("DAL", "Delta Air Lines, Inc."),

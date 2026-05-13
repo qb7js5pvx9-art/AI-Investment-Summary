@@ -113,8 +113,8 @@ function renderPortfolio() {
   el.portfolioList.innerHTML = "";
   if (!state.portfolio.length) {
     const p = document.createElement("p");
-    p.className = "subtle dark";
-    p.textContent = "Add 5 securities for the MVP brief.";
+    p.className = "hint";
+    p.textContent = "Add five companies or funds to build your brief.";
     el.portfolioList.appendChild(p);
     return;
   }
@@ -149,7 +149,7 @@ function addSecurity(entry) {
     return;
   }
   if (state.portfolio.length >= 5) {
-    toast("MVP supports 5 securities only");
+    toast("Your list is full — five is the max for now.");
     return;
   }
   state.portfolio.push({
@@ -207,7 +207,7 @@ function setLoading(isLoading) {
   el.loadingPanel.classList.toggle("hidden", !isLoading);
   el.generateBtn.disabled = isLoading;
   el.regenBtn.disabled = isLoading;
-  el.generateBtn.textContent = isLoading ? "Generating..." : "Generate daily brief";
+  el.generateBtn.textContent = isLoading ? "Almost there..." : "Make today's brief";
 }
 
 function estimateDuration(script) {
@@ -272,7 +272,7 @@ function renderSourceCards(container, links) {
   container.innerHTML = "";
   if (!links.length) {
     const p = document.createElement("p");
-    p.className = "subtle dark";
+    p.className = "hint";
     p.textContent = "No article links yet.";
     container.appendChild(p);
     return;
@@ -341,7 +341,7 @@ function renderBrief(payload) {
   el.briefDate.textContent = dateLabel;
   el.showNotesDate.textContent = dateLabel;
   el.greetingTitle.textContent = payload.greeting || `Good morning, ${payload.listener_name}`;
-  el.briefSubtitle.textContent = `${payload.listener_name}, here is your personalised market brief.`;
+  el.briefSubtitle.textContent = `Here's what stood out overnight - picked for you, ${payload.listener_name}.`;
   el.estLength.textContent = estimateDuration(payload.script || "");
   el.statPortfolio.textContent = String((payload.security_impact_notes || []).length);
   el.statGeneral.textContent = String((payload.general_news_notes || []).length);
@@ -364,8 +364,8 @@ function renderBrief(payload) {
 async function generateDailyBrief() {
   if (state.loading) return;
   if (state.portfolio.length !== 5) {
-    setStatus("MVP requires exactly 5 securities.", true);
-    toast("Please select exactly 5 securities");
+    setStatus("Add five companies or funds on the Portfolio tab first.", true);
+    toast("Choose five names for your list");
     switchScreen("portfolio");
     return;
   }

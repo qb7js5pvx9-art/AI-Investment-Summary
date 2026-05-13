@@ -200,17 +200,16 @@ async def build_daily_brief(req: DailyBriefRequest) -> DailyBriefResponse:
         source_links=source_links,
         audio_url=f"/audio/{audio_basename}",
         speaker_tip=(
-            "For best playback, connect to an Alexa or external speaker. "
-            "If using alarm mode, trigger this webapp from your morning shortcut."
+            "Headphones or a speaker in the kitchen make it easy to listen while you get ready. "
+            "If you use an alarm shortcut, open this page a moment before the brief plays."
         ),
         ios_alarm_steps=[
-            "Open iOS Shortcuts and create a Personal Automation for your wake-up time.",
-            "Add action: Open URL -> your deployed webapp briefing page.",
-            "Add action: Wait 8-12 seconds to allow audio preload.",
-            "Add action: Set Playback Destination (optional speaker/AirPlay target).",
+            "On your iPhone, open the Shortcuts app.",
+            "Create an automation for the time you wake up.",
+            'Add the "Open URLs" action and paste your morning-brief page link.',
+            "Optionally add a short pause so the page can load, then pick your speaker.",
         ],
         usage_disclaimer=(
-            "This briefing is informational only, stays neutral, and is not financial advice. "
-            "No outcomes are guaranteed."
+            "This is for your general knowledge only. It isn't financial advice, and nothing is guaranteed."
         ),
     )

@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Morning Brief Webapp MVP</title>
+    <title>Your morning brief</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/static/styles.css" />
@@ -17,7 +17,7 @@
     <main class="app-phone">
       <header class="app-top">
         <div>
-          <p class="app-title">Today's Briefing</p>
+          <p class="app-title">Your morning brief</p>
           <p id="brief-date" class="app-date">-</p>
         </div>
         <button id="notify-btn" class="icon-btn" type="button" title="Ask for notifications">🔔</button>
@@ -26,25 +26,25 @@
       <section class="screen is-active" data-screen="briefings">
         <div class="hero-player">
           <p id="brief-greeting-title" class="hero-greeting">Good morning</p>
-          <p id="brief-subtitle" class="hero-subtitle">Here's your personalised market call briefing.</p>
+          <p id="brief-subtitle" class="hero-subtitle">A calm read of overnight news for the companies you follow.</p>
 
           <div class="audio-ring">
             <div class="ring-core">
               <p id="est-length">--:--</p>
-              <span>Estimated length</span>
+              <span>About this long</span>
             </div>
           </div>
 
           <div class="quick-stats">
-            <div><span id="stat-portfolio">0</span> portfolio updates</div>
-            <div><span id="stat-general">0</span> general update</div>
+            <div><span id="stat-portfolio">0</span> on your list</div>
+            <div><span id="stat-general">0</span> wider stories</div>
           </div>
 
           <audio id="audio-player" controls preload="none"></audio>
 
           <div class="hero-actions">
-            <button id="generate-btn" class="btn btn--primary" type="button">Generate daily brief</button>
-            <button id="regen-btn" class="btn btn--secondary" type="button">Regenerate</button>
+            <button id="generate-btn" class="btn btn--primary" type="button">Make today's brief</button>
+            <button id="regen-btn" class="btn btn--secondary" type="button">Refresh</button>
             <a id="audio-download" class="btn btn--ghost" href="#" download>Download</a>
           </div>
           <p id="status" class="status"></p>
@@ -54,16 +54,16 @@
           <div class="bar"></div>
           <div class="bar"></div>
           <div class="bar"></div>
-          <p>Generating your brief...</p>
+          <p>Putting your brief together...</p>
         </div>
 
         <div class="info-card">
-          <h3>Quote of the day</h3>
+          <h3>Thought for today</h3>
           <p id="quote-of-day">-</p>
         </div>
         <div class="info-card">
-          <h3>Audio tip</h3>
-          <p id="speaker-tip">Connect to an Alexa or speaker for the best morning experience.</p>
+          <h3>Listening tip</h3>
+          <p id="speaker-tip">Bluetooth headphones or a kitchen speaker work great while you get ready.</p>
           <p id="usage-disclaimer" class="subtle">Informational only. Not financial advice.</p>
         </div>
       </section>
@@ -71,7 +71,7 @@
       <section class="screen" data-screen="show-notes">
         <div class="white-card">
           <div class="screen-head">
-            <h2>Show Notes</h2>
+            <h2>Notes</h2>
             <p id="show-notes-date">-</p>
           </div>
           <div class="segment">
@@ -123,8 +123,8 @@
 
       <section class="screen" data-screen="portfolio">
         <div class="white-card">
-          <h2>MVP setup</h2>
-          <p class="subtle dark">Accounts are next. These fields are local for now.</p>
+          <h2>Your profile</h2>
+          <p class="hint">Saved on this device for now — nothing leaves your browser except when you generate a brief.</p>
           <div class="field-grid">
             <label><span>Name</span><input id="listener-name" type="text" value="Angus" /></label>
             <label><span>Occupation</span><input id="occupation" type="text" value="Finance analyst" /></label>
@@ -158,10 +158,10 @@
           </div>
 
           <div class="portfolio-head">
-            <h3>Create Portfolio (5 securities)</h3>
+            <h3>Your watchlist</h3>
             <p id="portfolio-meta">0 / 5</p>
           </div>
-          <input id="stock-search" type="text" placeholder="Search ticker or company..." autocomplete="off" />
+          <input id="stock-search" type="text" placeholder="Search by name or ticker..." autocomplete="off" />
           <div class="search-row">
             <select id="asset-type">
               <option value="stock">Stock</option>
@@ -175,21 +175,21 @@
           <div id="portfolio-list" class="stack"></div>
 
           <div class="rules">
-            <h3>Content rules</h3>
+            <h3>What you'll hear</h3>
             <ul class="bullet-list">
-              <li>Neutral tone. No buy, sell, or hold recommendations.</li>
-              <li>Explains why each news item may affect each security.</li>
-              <li>No guarantees. Informational only, not financial advice.</li>
+              <li>Plain language - we don't suggest buying or selling.</li>
+              <li>We connect stories to what's on your list when we can.</li>
+              <li>For learning only; not personalised financial advice.</li>
             </ul>
-            <h3>iOS alarm shortcuts</h3>
+            <h3>Using this with a morning alarm</h3>
             <ol id="alarm-steps" class="bullet-list numbered"></ol>
           </div>
         </div>
       </section>
 
       <nav class="bottom-nav">
-        <button class="nav-item is-active" type="button" data-screen-target="briefings">Briefings</button>
-        <button class="nav-item" type="button" data-screen-target="show-notes">Show notes</button>
+        <button class="nav-item is-active" type="button" data-screen-target="briefings">Listen</button>
+        <button class="nav-item" type="button" data-screen-target="show-notes">Notes</button>
         <button class="nav-item" type="button" data-screen-target="articles">Articles</button>
         <button class="nav-item" type="button" data-screen-target="portfolio">Portfolio</button>
       </nav>
@@ -200,8 +200,8 @@
         <button id="close-article-sheet" class="icon-btn" type="button">✕</button>
         <p id="article-tag" class="article-tag">-</p>
         <h2 id="article-title">-</h2>
-        <p id="article-meta" class="subtle dark">-</p>
-        <h3>Why it matters for you</h3>
+        <p id="article-meta" class="hint">-</p>
+        <h3>Why this might matter</h3>
         <p id="article-why" class="sheet-copy">-</p>
         <h3>Key points</h3>
         <ul id="article-points" class="bullet-list"></ul>
