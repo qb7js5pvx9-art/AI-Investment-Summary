@@ -5,8 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from app.config import get_settings
-from app.models import BriefingRequest, BriefingResponse, StockSearchResponse
-from app.service import build_briefing
+from app.models import BriefingRequest, BriefingResponse, DailyBriefRequest, DailyBriefResponse, StockSearchResponse
+from app.service import build_briefing, build_daily_brief
 from app.stocks import search_stocks
 
 app = FastAPI(title="Morning Stock Briefing POC", version="0.1.0")
@@ -23,6 +23,11 @@ async def health() -> dict[str, str]:
 @app.post("/briefing", response_model=BriefingResponse)
 async def create_briefing(req: BriefingRequest) -> BriefingResponse:
     return await build_briefing(req)
+
+
+@app.post("/daily-brief-mvp", response_model=DailyBriefResponse)
+async def create_daily_brief(req: DailyBriefRequest) -> DailyBriefResponse:
+    return await build_daily_brief(req)
 
 
 @app.get("/stocks/search", response_model=StockSearchResponse)

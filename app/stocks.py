@@ -97,6 +97,7 @@ POPULAR_STOCKS: list[StockEntry] = [
     StockEntry("MDT", "Medtronic plc"),
     StockEntry("CVS", "CVS Health Corporation"),
     StockEntry("BKNG", "Booking Holdings Inc."),
+    StockEntry("TRIP", "Tripadvisor, Inc."),
     StockEntry("MAR", "Marriott International, Inc."),
     StockEntry("HLT", "Hilton Worldwide Holdings Inc."),
     StockEntry("DAL", "Delta Air Lines, Inc."),
@@ -118,6 +119,13 @@ POPULAR_STOCKS: list[StockEntry] = [
     StockEntry("DIA", "SPDR Dow Jones Industrial Average ETF Trust"),
     StockEntry("VTI", "Vanguard Total Stock Market ETF"),
 ]
+
+
+SYMBOL_TO_NAME = {entry.symbol.upper(): entry.name for entry in POPULAR_STOCKS}
+
+
+def get_company_name(symbol: str) -> str:
+    return SYMBOL_TO_NAME.get(symbol.strip().upper(), "")
 
 
 def search_stocks(query: str, limit: int = 12) -> list[dict[str, str]]:

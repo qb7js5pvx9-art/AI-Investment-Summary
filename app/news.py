@@ -7,9 +7,18 @@ import httpx
 
 from app.config import get_settings
 from app.models import Article
+from app.stocks import get_company_name
+
+GENERAL_NEWS_CATEGORY_QUERIES: dict[str, str] = {
+    "macro": '"inflation" OR "interest rates" OR "central bank" OR "bond yields" OR "jobs report"',
+    "uk-politics": '"UK politics" OR "Westminster" OR "Bank of England" OR "budget"',
+    "sport": "sport business OR media rights OR major sporting events",
+    "tech": '"artificial intelligence" OR semiconductors OR cloud OR cybersecurity',
+    "energy": "oil prices OR OPEC OR natural gas OR renewables",
+}
 
 
-def _build_query(tickers: Iterable[str]) -> str:
+def _build_query(tickers: Iterable[str], include_company_names: bool = True) -> str:
     # Include symbol and common prefixed form to broaden match recall.
     parts = []
     for ticker in tickers:
@@ -18,14 +27,24 @@ def _build_query(tickers: Iterable[str]) -> str:
             continue
         parts.append(f'"{clean}"')
         parts.append(f'"${clean}"')
+        if include_company_names:
+            company_name = get_company_name(clean)
+            if company_name:
+                parts.append(f'"{company_name}"')
     return " OR ".join(parts)
 
 
-async def fetch_articles(tickers: list[str], hours_back: int, max_articles: int) -> list[Article]:
+async def _fetch_articles_once(
+    *,
+    tickers: list[str],
+    hours_back: int,
+    max_articles: int,
+    include_company_names: bool,
+) -> list[Article]:
     settings = get_settings()
     since = datetime.now(tz=timezone.utc) - timedelta(hours=hours_back)
     params = {
-        "q": _build_query(tickers),
+        "q": _build_query(tickers, include_company_names=include_company_names),
         "sortBy": "publishedAt",
         "language": "en",
         "pageSize": max_articles,
@@ -34,9 +53,13 @@ async def fetch_articles(tickers: list[str], hours_back: int, max_articles: int)
     }
 
     async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.get(settings.newsapi_base_url, params=params)
-        response.raise_for_status()
-        payload = response.json()
+        try:
+            response = await client.get(settings.newsapi_base_url, params=params)
+            response.raise_for_status()
+            payload = response.json()
+        except httpx.HTTPError:
+            # Gracefully degrade if NewsAPI rejects/transiently fails this query.
+            return []
 
     raw_articles = payload.get("articles", [])
     articles: list[Article] = []
@@ -68,3 +91,97 @@ async def fetch_articles(tickers: list[str], hours_back: int, max_articles: int)
         articles.append(article)
 
     return articles
+
+
+async def _fetch_by_query_once(*, query: str, hours_back: int, max_articles: int) -> list[Article]:
+    settings = get_settings()
+    since = datetime.now(tz=timezone.utc) - timedelta(hours=hours_back)
+    params = {
+        "q": query,
+        "sortBy": "publishedAt",
+        "language": "en",
+        "pageSize": max_articles,
+        "from": since.isoformat(),
+        "apiKey": settings.newsapi_key,
+    }
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        try:
+            response = await client.get(settings.newsapi_base_url, params=params)
+            response.raise_for_status()
+            payload = response.json()
+        except httpx.HTTPError:
+            return []
+
+    raw_articles = payload.get("articles", [])
+    articles: list[Article] = []
+    for item in raw_articles:
+        published_at = item.get("publishedAt")
+        if not published_at:
+            continue
+        published_at = published_at.replace("Z", "+00:00")
+        try:
+            article = Article(
+                source=(item.get("source") or {}).get("name", "Unknown"),
+                title=item.get("title") or "",
+                url=item.get("url", ""),
+                published_at=published_at,
+                description=item.get("description") or "",
+                content=item.get("content") or "",
+                related_tickers=[],
+            )
+        except Exception:
+            continue
+        articles.append(article)
+    return articles
+
+
+async def fetch_articles(tickers: list[str], hours_back: int, max_articles: int) -> list[Article]:
+    """
+    Try a narrow overnight query first, then progressively widen if empty.
+    """
+    attempts = [
+        # Overnight, richest query.
+        {"hours_back": hours_back, "include_company_names": True},
+        # Wider lookback if low overnight coverage.
+        {"hours_back": max(hours_back, 36), "include_company_names": True},
+        # Symbol-only fallback for ambiguous company names.
+        {"hours_back": max(hours_back, 48), "include_company_names": False},
+    ]
+    seen_urls: set[str] = set()
+    merged: list[Article] = []
+    for attempt in attempts:
+        batch = await _fetch_articles_once(
+            tickers=tickers,
+            hours_back=attempt["hours_back"],
+            max_articles=max_articles,
+            include_company_names=attempt["include_company_names"],
+        )
+        for article in batch:
+            if article.url and article.url in seen_urls:
+                continue
+            if article.url:
+                seen_urls.add(article.url)
+            merged.append(article)
+        if len(merged) >= min(max_articles, 10):
+            break
+    return merged[:max_articles]
+
+
+async def fetch_category_articles(category: str, hours_back: int, max_articles: int) -> list[Article]:
+    key = category.strip().lower()
+    query = GENERAL_NEWS_CATEGORY_QUERIES.get(key, key or "macro economy")
+    attempts = [hours_back, max(hours_back, 36)]
+    merged: list[Article] = []
+    seen_urls: set[str] = set()
+    for attempt_hours in attempts:
+        batch = await _fetch_by_query_once(query=query, hours_back=attempt_hours, max_articles=max_articles)
+        for article in batch:
+            if article.url and article.url in seen_urls:
+                continue
+            if article.url:
+                seen_urls.add(article.url)
+            merged.append(article)
+        if len(merged) >= min(max_articles, 8):
+            break
+    return merged[:max_articles]
