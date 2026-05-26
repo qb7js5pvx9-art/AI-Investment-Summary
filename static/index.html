@@ -1,199 +1,675 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your morning brief</title>
+    <title>MarketCall</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260523-7" />
   </head>
   <body>
     <div class="app-background"></div>
     <main class="app-phone">
       <header class="app-top">
-        <div>
-          <p class="app-title">Your morning brief</p>
-          <p id="brief-date" class="app-date">-</p>
+        <div class="app-top__intro">
+          <div class="app-brand">
+            <div class="app-brand__title-row">
+              <span class="app-brand__logo" aria-hidden="true"></span>
+              <p id="app-title" class="app-title">MarketCall</p>
+            </div>
+            <p id="app-tagline" class="app-top__tagline">Your morning brief</p>
+          </div>
         </div>
-        <button id="notify-btn" class="icon-btn" type="button" title="Ask for notifications">🔔</button>
       </header>
 
       <section class="screen is-active" data-screen="briefings">
-        <div class="hero-player">
-          <p id="brief-greeting-title" class="hero-greeting">Good morning</p>
-          <p id="brief-subtitle" class="hero-subtitle">A calm read of overnight news for the companies you follow.</p>
-
-          <div class="audio-ring">
-            <div class="ring-core">
-              <p id="est-length">--:--</p>
-              <span>About this long</span>
+        <div class="home">
+          <header class="home-topbar">
+            <div class="home-topbar__copy">
+              <p id="home-date-line" class="home-topbar__date">Friday, 22 May · Markets open in 2h</p>
+              <h1 id="brief-greeting-title" class="home-topbar__greeting">Good morning, Angus.</h1>
             </div>
+            <button id="notify-btn" class="home-topbar__bell" type="button" title="Notifications" aria-label="Notifications">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3a5 5 0 0 0-5 5v3.5L5.5 14v1h13v-1L17 11.5V8a5 5 0 0 0-5-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M10 18a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </header>
+
+          <div id="new-stories-badge" class="new-stories-badge hidden" aria-live="polite">
+            <svg class="new-stories-badge__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2l1.4 4.2L18 8l-4.6 1.8L12 14l-1.4-4.2L6 8l4.6-1.8L12 2Z" fill="currentColor"/>
+              <path d="M5 16l.8 2.4L8 19l-2.2.9L5 22l-.8-2.1L2 19l2.2-.6L5 16Z" fill="currentColor" opacity="0.85"/>
+            </svg>
+            <span id="new-stories-text">0 new stories since yesterday</span>
           </div>
 
-          <div class="quick-stats">
-            <div><span id="stat-portfolio">0</span> on your list</div>
-            <div><span id="stat-general">0</span> wider stories</div>
-          </div>
+          <article id="brief-card" class="brief-card" aria-label="Today's brief player">
+            <p class="brief-card__eyebrow">
+              Today's brief<span id="brief-duration-wrap" class="brief-card__duration-wrap hidden"> · <span id="brief-duration-label"></span></span>
+            </p>
 
-          <audio id="audio-player" controls preload="none"></audio>
-
-          <div class="hero-actions">
-            <button id="generate-btn" class="btn btn--primary" type="button">Make today's brief</button>
-            <button id="regen-btn" class="btn btn--secondary" type="button">Refresh</button>
-            <a id="audio-download" class="btn btn--ghost" href="#" download>Download</a>
-          </div>
-          <p id="status" class="status"></p>
-        </div>
-
-        <div id="loading-panel" class="loading hidden">
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <p>Putting your brief together...</p>
-        </div>
-
-        <div class="info-card">
-          <h3>Thought for today</h3>
-          <p id="quote-of-day">-</p>
-        </div>
-        <div class="info-card">
-          <h3>Listening tip</h3>
-          <p id="speaker-tip">Bluetooth headphones or a kitchen speaker work great while you get ready.</p>
-          <p id="usage-disclaimer" class="subtle">Informational only. Not financial advice.</p>
-        </div>
-      </section>
-
-      <section class="screen" data-screen="show-notes">
-        <div class="white-card">
-          <div class="screen-head">
-            <h2>Notes</h2>
-            <p id="show-notes-date">-</p>
-          </div>
-          <div class="segment">
-            <button class="segment-btn is-active" type="button" data-notes-tab="summary">Summary</button>
-            <button class="segment-btn" type="button" data-notes-tab="articles">Articles</button>
-          </div>
-
-          <div id="notes-summary" class="notes-panel is-active">
-            <h3>Summary</h3>
-            <ul id="summary-list" class="bullet-list"></ul>
-
-            <div class="tone-box">
-              <p>Overall tone</p>
-              <div class="tone-grid">
-                <span>Positive <strong id="tone-positive">0</strong></span>
-                <span>Neutral <strong id="tone-neutral">0</strong></span>
-                <span>Negative <strong id="tone-negative">0</strong></span>
-                <span>Mixed <strong id="tone-mixed">0</strong></span>
+            <div class="brief-card__play-row">
+              <button
+                id="play-btn"
+                class="brief-play"
+                type="button"
+                aria-controls="audio-player"
+                aria-label="Play briefing"
+                disabled
+              >
+                <span class="brief-play__ring" aria-hidden="true"></span>
+                <span class="brief-play__inner" aria-hidden="true">
+                  <svg id="play-icon-play" class="brief-play__icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M10 8.5v7l6.5-3.5-6.5-3.5Z"/>
+                  </svg>
+                  <svg id="play-icon-pause" class="brief-play__icon hidden" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M9 8h2.5v8H9V8Zm3.5 0H15v8h-2.5V8Z"/>
+                  </svg>
+                </span>
+              </button>
+              <div class="brief-card__episode">
+                <p id="episode-title" class="brief-card__episode-title">Generate your brief to listen</p>
+                <p id="episode-meta" class="brief-card__episode-meta">Tap Refresh to generate · AI-narrated</p>
               </div>
             </div>
 
-            <h3>Portfolio updates</h3>
-            <div id="security-notes" class="stack"></div>
+            <div id="player-progress" class="brief-transport brief-progress--hidden" aria-hidden="true">
+              <div
+                id="progress-track"
+                class="brief-progress__track"
+                role="slider"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+                tabindex="0"
+                aria-label="Brief playback position"
+              >
+                <div id="progress-fill" class="brief-progress__fill"></div>
+                <div id="progress-thumb" class="brief-progress__thumb" aria-hidden="true"></div>
+              </div>
+              <div class="brief-transport__times">
+                <span id="progress-time-current">0:00</span>
+                <span id="progress-time-total">0:00</span>
+              </div>
+              <span id="progress-current" class="visually-hidden">0:00</span>
+              <span id="progress-total" class="visually-hidden">0:00</span>
+            </div>
 
-            <h3>General update</h3>
-            <ul id="general-notes" class="bullet-list"></ul>
+            <div class="brief-card__footer">
+              <div class="brief-stats" aria-label="Briefing coverage">
+                <div class="brief-stat">
+                  <span id="stat-stories" class="brief-stat__value">0</span>
+                  <span class="brief-stat__label">Stories</span>
+                </div>
+                <div class="brief-stat">
+                  <span id="stat-articles" class="brief-stat__value">0</span>
+                  <span class="brief-stat__label">Articles</span>
+                </div>
+                <div class="brief-stat">
+                  <span id="stat-watchlist" class="brief-stat__value">0</span>
+                  <span class="brief-stat__label">Watchlist</span>
+                </div>
+              </div>
+              <button id="refresh-brief-btn" class="brief-refresh" type="button">
+                <svg id="refresh-icon" class="brief-refresh__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 12a8 8 0 0 1 13.5-5.7M20 7v4h-4M20 12a8 8 0 0 1-13.5 5.7M4 17v-4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <svg id="refresh-spinner" class="brief-refresh__spinner hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-dasharray="40 20"/>
+                </svg>
+                <span id="refresh-brief-label">Refresh</span>
+              </button>
+            </div>
+          </article>
+
+          <div class="home-quick-cards">
+            <button type="button" class="home-quick-card" data-screen-target="show-notes">
+              <span class="home-quick-card__top">
+                <span class="home-quick-card__icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4.5 7.75H8.25M8.25 7.75H17.25V15.25L12 19.25L8.25 15.25V7.75" />
+                  </svg>
+                </span>
+                <span id="notes-nav-badge" class="home-quick-card__pill">0 items</span>
+              </span>
+              <span class="home-quick-card__title">Notes</span>
+              <span class="home-quick-card__sub">Summary &amp; portfolio</span>
+            </button>
+            <button type="button" class="home-quick-card" data-screen-target="articles">
+              <span class="home-quick-card__top">
+                <span class="home-quick-card__icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" />
+                    <path d="M7 8h10" />
+                    <path d="M7 12h10" />
+                    <path d="M7 16h6" />
+                  </svg>
+                </span>
+                <span id="articles-nav-badge" class="home-quick-card__pill">0 articles</span>
+              </span>
+              <span class="home-quick-card__title">Articles</span>
+              <span class="home-quick-card__sub">Portfolio &amp; macro</span>
+            </button>
           </div>
 
-          <div id="notes-articles" class="notes-panel">
-            <div id="source-links-notes" class="stack"></div>
+          <article class="portfolio-insight-card" aria-label="Portfolio insight">
+            <h2 class="portfolio-insight-card__title">Portfolio insight</h2>
+            <div id="portfolio-insights-empty" class="portfolio-insight-card__empty hidden">
+              <p>Insights appear after you generate today's brief.</p>
+              <p>We'll surface watchlist moves and headlines here.</p>
+            </div>
+            <ul id="portfolio-insights-list" class="portfolio-insight-card__list"></ul>
+            <button type="button" id="portfolio-insights-more" class="portfolio-insight-card__view-all hidden">
+              View all in Notes →
+            </button>
+          </article>
+
+          <p id="listen-status-message" class="status home-status hidden" aria-live="polite"></p>
+          <audio id="audio-player" class="visually-hidden-audio" preload="metadata"></audio>
+        </div>
+      </section>
+
+      <section class="screen notes-screen" data-screen="show-notes">
+        <div class="notes-page">
+          <header class="notes-page__header">
+            <p id="show-notes-date" class="notes-page__date">—</p>
+            <h1 class="notes-page__title">Today's summary.</h1>
+          </header>
+
+          <p id="notes-empty" class="notes-page__empty hidden">
+            Generate today's brief from the Home screen to see your summary here.
+          </p>
+
+          <div id="notes-loading" class="notes-page__loading hidden" aria-busy="true" aria-label="Loading summary">
+            <article class="notes-top-card">
+              <p class="notes-top-card__eyebrow">Top story</p>
+              <div class="notes-sk notes-sk--on-dark" style="width: 90%; height: 14px; margin-bottom: 8px"></div>
+              <div class="notes-top-card__secondary">
+                <div class="notes-sk notes-sk--on-dark" style="width: 80%; height: 10px; margin: 5px 0"></div>
+                <div class="notes-sk notes-sk--on-dark" style="width: 70%; height: 10px; margin: 5px 0"></div>
+              </div>
+            </article>
+            <div class="notes-tone-grid" role="group" aria-label="Market tone">
+              <div class="notes-tone-box"><div class="notes-sk notes-sk--tone"></div><span class="notes-tone-box__label">Positive</span></div>
+              <div class="notes-tone-box"><div class="notes-sk notes-sk--tone"></div><span class="notes-tone-box__label">Neutral</span></div>
+              <div class="notes-tone-box"><div class="notes-sk notes-sk--tone"></div><span class="notes-tone-box__label">Negative</span></div>
+            </div>
+            <p class="notes-sk notes-sk--line" style="width: 55%; height: 10px; margin: 0 0 14px"></p>
+            <div class="notes-portfolio">
+              <article class="notes-stock-card">
+                <div class="notes-stock-card__head">
+                  <span class="notes-sk" style="width: 38px; height: 18px"></span>
+                  <span class="notes-sk" style="flex: 1; height: 12px"></span>
+                  <span class="notes-sk" style="width: 44px; height: 18px; border-radius: 20px"></span>
+                  <span class="notes-sk" style="width: 36px; height: 22px"></span>
+                </div>
+                <div class="notes-sk notes-sk--line" style="width: 100%"></div>
+                <div class="notes-sk notes-sk--line" style="width: 75%"></div>
+                <div class="notes-why-block">
+                  <div class="notes-sk notes-sk--line" style="width: 100%"></div>
+                  <div class="notes-sk notes-sk--line" style="width: 60%"></div>
+                </div>
+              </article>
+              <article class="notes-stock-card">
+                <div class="notes-stock-card__head">
+                  <span class="notes-sk" style="width: 38px; height: 18px"></span>
+                  <span class="notes-sk" style="flex: 1; height: 12px"></span>
+                  <span class="notes-sk" style="width: 44px; height: 18px; border-radius: 20px"></span>
+                  <span class="notes-sk" style="width: 36px; height: 22px"></span>
+                </div>
+                <div class="notes-sk notes-sk--line" style="width: 100%"></div>
+                <div class="notes-sk notes-sk--line" style="width: 75%"></div>
+                <div class="notes-why-block">
+                  <div class="notes-sk notes-sk--line" style="width: 100%"></div>
+                  <div class="notes-sk notes-sk--line" style="width: 60%"></div>
+                </div>
+              </article>
+            </div>
+            <div class="notes-general">
+              <div class="notes-general__row">
+                <span class="notes-general__dot" aria-hidden="true"></span>
+                <span class="notes-sk notes-sk--line" style="flex: 1"></span>
+                <span class="notes-sk" style="width: 36px; height: 20px; flex-shrink: 0"></span>
+              </div>
+              <div class="notes-general__row">
+                <span class="notes-general__dot" aria-hidden="true"></span>
+                <span class="notes-sk notes-sk--line" style="flex: 1"></span>
+                <span class="notes-sk" style="width: 36px; height: 20px; flex-shrink: 0"></span>
+              </div>
+              <div class="notes-general__row">
+                <span class="notes-general__dot" aria-hidden="true"></span>
+                <span class="notes-sk notes-sk--line" style="flex: 1"></span>
+                <span class="notes-sk" style="width: 36px; height: 20px; flex-shrink: 0"></span>
+              </div>
+            </div>
+          </div>
+
+          <div id="notes-body" class="notes-page__body hidden">
+            <article id="notes-top-story" class="notes-top-card">
+              <p class="notes-top-card__eyebrow">Top story</p>
+              <h2 id="notes-top-headline" class="notes-top-card__headline"></h2>
+              <ul id="notes-secondary-stories" class="notes-top-card__secondary"></ul>
+            </article>
+
+            <div class="notes-tone-grid" role="group" aria-label="Market tone">
+              <div class="notes-tone-box notes-tone-box--positive">
+                <span id="tone-positive" class="notes-tone-box__count">0</span>
+                <span class="notes-tone-box__label">Positive</span>
+              </div>
+              <div class="notes-tone-box notes-tone-box--neutral">
+                <span id="tone-neutral" class="notes-tone-box__count">0</span>
+                <span class="notes-tone-box__label">Neutral</span>
+              </div>
+              <div class="notes-tone-box notes-tone-box--negative">
+                <span id="tone-negative" class="notes-tone-box__count">0</span>
+                <span class="notes-tone-box__label">Negative</span>
+              </div>
+            </div>
+            <p id="tone-compare" class="notes-tone-compare">Tone unchanged vs yesterday</p>
+
+            <section class="notes-portfolio-section">
+              <h2 class="notes-section-label">Portfolio updates</h2>
+              <div id="security-notes" class="notes-portfolio"></div>
+            </section>
+
+            <section class="notes-general-section">
+              <h2 class="notes-section-label">General update</h2>
+              <ul id="general-notes" class="notes-general"></ul>
+            </section>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="screen articles-screen" data-screen="articles">
+        <div class="articles-page">
+          <header class="articles-page__header">
+            <p id="articles-eyebrow" class="articles-page__eyebrow">— · 0 articles</p>
+            <h1 class="articles-page__title">Today's articles.</h1>
+          </header>
+
+          <div id="articles-filters" class="articles-filters" role="tablist" aria-label="Article filters"></div>
+
+          <div id="articles-loading" class="articles-loading hidden" aria-busy="true" aria-label="Loading articles">
+            <article class="articles-top-story articles-top-story--skeleton" aria-hidden="true">
+              <div class="articles-top-story__eyebrow">
+                <span class="articles-sk articles-sk--top-meta" style="width: 52px"></span>
+                <span class="articles-sk articles-sk--top-meta" style="width: 36px"></span>
+              </div>
+              <div class="articles-sk articles-sk--top-headline"></div>
+              <div class="articles-top-story__meta">
+                <span class="articles-sk articles-sk--top-chip"></span>
+                <span class="articles-sk articles-sk--top-meta" style="width: 40px"></span>
+                <span class="articles-sk articles-sk--top-meta" style="width: 60px"></span>
+                <span class="articles-sk articles-sk--top-meta" style="width: 40px"></span>
+              </div>
+            </article>
+            <div class="articles-skeleton-list">
+              <article class="articles-item-card articles-item-card--skeleton" aria-hidden="true">
+                <div class="articles-item-card__head">
+                  <span class="articles-sk articles-sk--chip"></span>
+                  <span class="articles-sk articles-sk--source"></span>
+                  <span class="articles-sk articles-sk--save"></span>
+                </div>
+                <div class="articles-sk articles-sk--line"></div>
+                <div class="articles-sk articles-sk--line articles-sk--line-short"></div>
+              </article>
+              <article class="articles-item-card articles-item-card--skeleton articles-item-card--skeleton-delay-1" aria-hidden="true">
+                <div class="articles-item-card__head">
+                  <span class="articles-sk articles-sk--chip"></span>
+                  <span class="articles-sk articles-sk--source"></span>
+                  <span class="articles-sk articles-sk--save"></span>
+                </div>
+                <div class="articles-sk articles-sk--line"></div>
+                <div class="articles-sk articles-sk--line articles-sk--line-short"></div>
+              </article>
+              <article class="articles-item-card articles-item-card--skeleton articles-item-card--skeleton-delay-2" aria-hidden="true">
+                <div class="articles-item-card__head">
+                  <span class="articles-sk articles-sk--chip"></span>
+                  <span class="articles-sk articles-sk--source"></span>
+                  <span class="articles-sk articles-sk--save"></span>
+                </div>
+                <div class="articles-sk articles-sk--line"></div>
+                <div class="articles-sk articles-sk--line articles-sk--line-short"></div>
+              </article>
+              <article class="articles-item-card articles-item-card--skeleton articles-item-card--skeleton-delay-3" aria-hidden="true">
+                <div class="articles-item-card__head">
+                  <span class="articles-sk articles-sk--chip"></span>
+                  <span class="articles-sk articles-sk--source"></span>
+                  <span class="articles-sk articles-sk--save"></span>
+                </div>
+                <div class="articles-sk articles-sk--line"></div>
+                <div class="articles-sk articles-sk--line articles-sk--line-short"></div>
+              </article>
+            </div>
+          </div>
+
+          <div id="articles-body" class="articles-body">
+            <div id="articles-top-story-slot"></div>
+            <p id="articles-section-label" class="articles-section-label">All articles</p>
+            <div id="articles-list" class="articles-list"></div>
+            <p id="articles-empty" class="articles-page__empty hidden"></p>
+          </div>
+
+          <button id="manage-muted-sources" class="visually-hidden" type="button" tabindex="-1" aria-hidden="true">Manage muted sources</button>
+        </div>
+      </section>
+
+      <section class="screen article-detail-screen" data-screen="article-detail">
+        <div class="article-detail-page">
+          <header class="article-detail-page__bar">
+            <button id="article-detail-back" class="article-detail-page__back" type="button">← Articles</button>
+            <button id="article-detail-save" class="articles-save-btn" type="button">Save</button>
+          </header>
+          <div class="article-detail-page__scroll">
+            <div id="article-detail-meta" class="article-detail-page__meta"></div>
+            <h1 id="article-detail-headline" class="article-detail-page__headline">—</h1>
+            <hr class="article-detail-page__divider" />
+            <p class="article-detail-page__section-label">Summary</p>
+            <p id="article-detail-summary" class="article-detail-page__summary">—</p>
+            <div id="article-detail-why" class="articles-why-block hidden">
+              <p class="articles-why-block__label">Why it's relevant</p>
+              <p id="article-detail-why-text" class="articles-why-block__body"></p>
+            </div>
+            <button id="article-detail-open" class="article-detail-page__cta" type="button">Read full article</button>
+            <p class="article-detail-page__cta-hint">Opens in your browser</p>
           </div>
         </div>
       </section>
 
-      <section class="screen" data-screen="articles">
-        <div class="white-card">
-          <div class="screen-head">
-            <h2>Articles</h2>
-            <p id="articles-count">0 articles</p>
-          </div>
-          <div class="segment">
-            <button class="segment-btn is-active article-filter" type="button" data-filter="all">All</button>
-            <button class="segment-btn article-filter" type="button" data-filter="portfolio">Portfolio</button>
-            <button class="segment-btn article-filter" type="button" data-filter="macro">Macro</button>
-          </div>
-          <div id="articles-list" class="stack"></div>
-        </div>
-      </section>
+      <section class="screen account-screen" data-screen="portfolio">
+        <div class="account-page">
+          <header class="account-page__header">
+            <p class="account-page__eyebrow">Account</p>
+            <h1 id="account-page-title" class="account-page__title">Profile.</h1>
+          </header>
 
-      <section class="screen" data-screen="portfolio">
-        <div class="white-card">
-          <h2>Your profile</h2>
-          <p class="hint">Saved on this device for now — nothing leaves your browser except when you generate a brief.</p>
-          <div class="field-grid">
-            <label><span>Name</span><input id="listener-name" type="text" value="Angus" /></label>
-            <label><span>Occupation</span><input id="occupation" type="text" value="Finance analyst" /></label>
-            <label>
-              <span>Investor type</span>
-              <select id="investor-type">
-                <option>Retail investor</option>
-                <option>Long-term investor</option>
-                <option>Active trader</option>
-              </select>
-            </label>
-            <label>
-              <span>App use</span>
-              <select id="app-use">
-                <option value="alarm">Alarm briefing</option>
-                <option value="morning-brief">Morning digest</option>
-              </select>
-            </label>
-            <label>
-              <span>General category</span>
-              <select id="general-category">
-                <option value="macro">Macro</option>
-                <option value="uk-politics">UK politics</option>
-                <option value="sport">Sport</option>
-                <option value="tech">Tech</option>
-                <option value="energy">Energy</option>
-              </select>
-            </label>
-            <label><span>Notification time</span><input id="notification-time" type="time" value="07:00" /></label>
-            <label class="toggle"><span>Alarm mode</span><input id="alarm-mode" type="checkbox" checked /></label>
+          <div id="account-segment" class="account-segment" role="tablist" aria-label="Account views">
+            <span id="account-segment-thumb" class="account-segment__thumb" aria-hidden="true"></span>
+            <button type="button" class="account-segment__btn is-active" role="tab" aria-selected="true" data-account-view="profile">Profile</button>
+            <button type="button" class="account-segment__btn" role="tab" aria-selected="false" data-account-view="watchlist">Watchlist</button>
           </div>
 
-          <div class="portfolio-head">
-            <h3>Your watchlist</h3>
-            <p id="portfolio-meta">0 / 5</p>
+          <div id="account-view-profile" class="account-view is-active">
+            <div class="account-pro-banner">
+              <span class="account-pro-banner__icon" aria-hidden="true">⚡</span>
+              <div class="account-pro-banner__copy">
+                <p class="account-pro-banner__title">Upgrade to MarketCall Pro</p>
+                <p class="account-pro-banner__sub">Unlimited watchlist · Custom briefs · Priority delivery</p>
+              </div>
+              <button type="button" class="account-pro-banner__cta" data-upgrade-cta>Upgrade</button>
+            </div>
+
+            <p class="account-section-label">About you</p>
+            <div class="account-group">
+              <button type="button" class="account-row" data-profile-field="name">
+                <span class="account-row__icon account-row__icon--green" aria-hidden="true">👤</span>
+                <span class="account-row__main">
+                  <span class="account-row__label">Name</span>
+                  <span id="profile-display-name" class="account-row__value">—</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+              <button type="button" class="account-row" data-profile-field="investor-type">
+                <span class="account-row__icon account-row__icon--blue" aria-hidden="true">📊</span>
+                <span class="account-row__main">
+                  <span class="account-row__label">Investor type</span>
+                  <span id="profile-display-investor" class="account-row__value">—</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+              <button type="button" class="account-row" data-profile-field="email">
+                <span class="account-row__icon account-row__icon--green" aria-hidden="true">✉️</span>
+                <span class="account-row__main">
+                  <span class="account-row__label">Email</span>
+                  <span id="profile-display-email" class="account-row__value account-row__value--muted">Not set</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+            </div>
+
+            <p class="account-section-label">Your brief</p>
+            <div class="account-group">
+              <button type="button" class="account-row" data-profile-field="focus">
+                <span class="account-row__icon account-row__icon--amber" aria-hidden="true">🎯</span>
+                <span class="account-row__main">
+                  <span class="account-row__label">Focus area</span>
+                  <span id="profile-display-focus" class="account-row__value">—</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+              <button type="button" class="account-row" data-profile-field="notify">
+                <span class="account-row__icon account-row__icon--amber" aria-hidden="true">🔔</span>
+                <span class="account-row__main">
+                  <span class="account-row__label">Notify at</span>
+                  <span id="profile-display-notify" class="account-row__value">—</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+              <button type="button" class="account-row" data-profile-field="app-use">
+                <span class="account-row__icon account-row__icon--amber" aria-hidden="true">📱</span>
+                <span class="account-row__main">
+                  <span class="account-row__label">App use</span>
+                  <span id="profile-display-app-use" class="account-row__value">—</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+              <div class="account-row account-row--static">
+                <span class="account-row__icon account-row__icon--green" aria-hidden="true">⏰</span>
+                <span class="account-row__main">
+                  <span class="account-row__label">Alarm mode</span>
+                  <span class="account-row__sub">Auto-plays brief when alarm fires</span>
+                </span>
+                <label class="account-toggle">
+                  <input id="alarm-mode" type="checkbox" checked />
+                  <span class="account-toggle__track" aria-hidden="true"></span>
+                </label>
+              </div>
+              <button type="button" id="alarm-setup-btn" class="account-row account-row--alarm-setup hidden">
+                <span class="account-row__main account-row__main--full">
+                  <span class="account-row__label account-row__label--link">Set up alarm mode</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+            </div>
+
+            <p class="account-section-label">App</p>
+            <div class="account-group">
+              <button type="button" class="account-row" data-profile-action="rate">
+                <span class="account-row__icon account-row__icon--blue" aria-hidden="true">⭐</span>
+                <span class="account-row__main">
+                  <span class="account-row__label">Rate MarketCall</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+              <button type="button" class="account-row" data-profile-action="feedback">
+                <span class="account-row__icon account-row__icon--blue" aria-hidden="true">💬</span>
+                <span class="account-row__main">
+                  <span class="account-row__label">Send feedback</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+              <button type="button" class="account-row" data-profile-action="terms">
+                <span class="account-row__icon account-row__icon--blue" aria-hidden="true">📄</span>
+                <span class="account-row__main">
+                  <span class="account-row__label">Terms &amp; Conditions</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+              <button type="button" class="account-row account-row--danger" data-profile-action="clear">
+                <span class="account-row__icon account-row__icon--red" aria-hidden="true">🚪</span>
+                <span class="account-row__main">
+                  <span class="account-row__label account-row__label--danger">Clear all data</span>
+                </span>
+                <span class="account-row__chevron" aria-hidden="true">›</span>
+              </button>
+            </div>
+
+            <p id="account-version" class="account-version">MarketCall v1.0.0</p>
           </div>
-          <input id="stock-search" type="text" placeholder="Search by name or ticker..." autocomplete="off" />
-          <div class="search-row">
-            <select id="asset-type">
+
+          <div id="account-view-watchlist" class="account-view" hidden>
+            <div class="account-watchlist-head">
+              <span class="account-watchlist-head__title">Your stocks</span>
+              <span id="portfolio-meta" class="account-slots-badge">0 / 5 slots</span>
+            </div>
+
+            <div class="account-watchlist-toolbar">
+              <input
+                id="stock-search"
+                class="account-watchlist-search"
+                type="search"
+                placeholder="Search ticker or name..."
+                autocomplete="off"
+                aria-label="Search ticker or name"
+              />
+              <button id="add-manual" class="account-watchlist-add" type="button">+ Add</button>
+            </div>
+            <ul id="search-results" class="account-search-results"></ul>
+
+            <div id="portfolio-list" class="account-group account-watchlist-list"></div>
+            <p id="watchlist-empty" class="account-watchlist-empty hidden">
+              Add your first stock to start receiving personalised briefs.
+            </p>
+
+            <div id="watchlist-upgrade-nudge" class="account-upgrade-nudge hidden">
+              <span class="account-upgrade-nudge__icon" aria-hidden="true">+</span>
+              <p class="account-upgrade-nudge__text">Upgrade for unlimited watchlist slots</p>
+              <button type="button" class="account-upgrade-nudge__btn" data-upgrade-cta>Upgrade</button>
+            </div>
+
+            <div class="account-how-it-works">
+              <p class="account-how-it-works__label">How it works</p>
+              <p class="account-how-it-works__body">Stocks on your watchlist appear in your daily brief, notes, and portfolio insight.</p>
+            </div>
+          </div>
+
+          <div class="visually-hidden" aria-hidden="true">
+            <input id="listener-name" type="text" value="Angus" autocomplete="name" tabindex="-1" />
+            <input id="listener-email" type="email" autocomplete="email" tabindex="-1" />
+            <select id="investor-type" tabindex="-1">
+              <option>General investor</option>
+              <option>Active trader</option>
+              <option>Long term investor</option>
+            </select>
+            <select id="general-category" tabindex="-1">
+              <option value="macro">Macro</option>
+              <option value="stock-markets">Stock Markets</option>
+              <option value="central-banks-rates">Central Banks &amp; Rates</option>
+              <option value="commodities-energy">Commodities &amp; Energy</option>
+              <option value="technology-ai">Technology &amp; AI</option>
+              <option value="real-estate-housing">Real Estate &amp; Housing</option>
+              <option value="crypto-digital-assets">Crypto &amp; Digital Assets</option>
+              <option value="geopolitics-trade">Geopolitics &amp; Trade</option>
+              <option value="uk-politics-economy">UK Politics &amp; Economy</option>
+              <option value="us-politics-economy">US Politics &amp; Economy</option>
+              <option value="sport">Sport</option>
+              <option value="manufacturing-industry">Manufacturing &amp; Industry</option>
+              <option value="consumer-retail">Consumer &amp; Retail</option>
+              <option value="healthcare-pharma">Healthcare &amp; Pharma</option>
+            </select>
+            <input id="notification-time" type="time" value="07:00" tabindex="-1" />
+            <select id="app-use" tabindex="-1">
+              <option value="alarm">Alarm briefing</option>
+              <option value="manual">Manual</option>
+            </select>
+            <select id="asset-type" tabindex="-1">
               <option value="stock">Stock</option>
               <option value="etf">ETF</option>
               <option value="bond">Bond</option>
             </select>
-            <button id="add-manual" class="btn btn--secondary" type="button">Add</button>
-            <button id="clear-portfolio" class="btn btn--ghost" type="button">Clear</button>
-          </div>
-          <ul id="search-results" class="results"></ul>
-          <div id="portfolio-list" class="stack"></div>
-
-          <div class="rules">
-            <h3>What you'll hear</h3>
-            <ul class="bullet-list">
-              <li>Plain language - we don't suggest buying or selling.</li>
-              <li>We connect stories to what's on your list when we can.</li>
-              <li>For learning only; not personalised financial advice.</li>
-            </ul>
-            <h3>Using this with a morning alarm</h3>
-            <ol id="alarm-steps" class="bullet-list numbered"></ol>
+            <input id="occupation" type="hidden" value="Finance analyst" />
+            <p id="investor-type-hint" hidden></p>
+            <p id="focus-area-hint" hidden></p>
+            <p id="watchlist-cap-msg" hidden></p>
           </div>
         </div>
       </section>
 
-      <nav class="bottom-nav">
-        <button class="nav-item is-active" type="button" data-screen-target="briefings">Listen</button>
-        <button class="nav-item" type="button" data-screen-target="show-notes">Notes</button>
-        <button class="nav-item" type="button" data-screen-target="articles">Articles</button>
-        <button class="nav-item" type="button" data-screen-target="portfolio">Portfolio</button>
-      </nav>
+      <p id="app-ai-footnote" class="app-ai-footnote app-ai-footnote--dock hidden" role="note">
+        AI-generated content may contain inaccuracies. Please review all information carefully and refer to the
+        <a
+          class="app-ai-footnote__link"
+          href="/static/docs/AI_Investment_Summary_Terms_and_Conditions.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Terms &amp; Conditions</a>. Nothing provided constitutes financial advice.
+      </p>
     </main>
+
+    <nav class="bottom-nav" aria-label="Main">
+        <button class="nav-item is-active" type="button" data-screen-target="briefings" aria-current="page">
+          <span class="nav-item__icon" aria-hidden="true">
+            <svg class="nav-item__svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 11.5 12 5l8 6.5" />
+              <path d="M6 11.5V19.5h12V11.5" />
+              <path d="M10 19.5V15Q12 12.25 14 15V19.5" />
+            </svg>
+          </span>
+          <span class="nav-item__label">Home</span>
+        </button>
+        <button class="nav-item" type="button" data-screen-target="show-notes">
+          <span class="nav-item__icon" aria-hidden="true">
+            <svg class="nav-item__svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.5 7.75H8.25M8.25 7.75H17.25V15.25L12 19.25L8.25 15.25V7.75" />
+            </svg>
+          </span>
+          <span class="nav-item__label">Notes</span>
+        </button>
+        <button class="nav-item" type="button" data-screen-target="articles">
+          <span class="nav-item__icon" aria-hidden="true">
+            <svg class="nav-item__svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" />
+              <path d="M7 8h10" />
+              <path d="M7 12h10" />
+              <path d="M7 16h6" />
+            </svg>
+          </span>
+          <span class="nav-item__label">Articles</span>
+        </button>
+        <button class="nav-item" type="button" data-screen-target="portfolio">
+          <span class="nav-item__icon" aria-hidden="true">
+            <svg class="nav-item__svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+              <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+            </svg>
+          </span>
+          <span class="nav-item__label">Profile</span>
+        </button>
+    </nav>
+
+    <div id="alarm-sheet" class="article-sheet hidden" role="dialog" aria-labelledby="alarm-sheet-title" aria-modal="true">
+      <div class="sheet-card sheet-card--alarm">
+        <button id="close-alarm-sheet" class="icon-btn" type="button" aria-label="Close">✕</button>
+        <h2 id="alarm-sheet-title" class="sheet-card__title">Set up alarm mode</h2>
+        <p class="sheet-card__lede">Use a Shortcuts automation so your brief opens when your alarm fires.</p>
+        <h3 class="listen-preview__heading">What you'll hear</h3>
+        <ul class="listen-preview__lines" aria-label="Briefing style">
+          <li>Plain language — we never suggest buying or selling.</li>
+          <li>Stories tied to your list whenever the news allows.</li>
+          <li>Overnight headlines — use Refresh on Listen when you want the very latest pass.</li>
+        </ul>
+        <h3 class="listen-preview__heading listen-preview__heading--sub">Using this with a morning alarm</h3>
+        <ol id="alarm-steps" class="listen-preview__steps"></ol>
+      </div>
+    </div>
+
+    <div id="muted-sources-sheet" class="article-sheet hidden" role="dialog" aria-labelledby="muted-sources-title" aria-modal="true">
+      <div class="sheet-card sheet-card--muted">
+        <button id="close-muted-sheet" class="icon-btn" type="button" aria-label="Close">✕</button>
+        <h2 id="muted-sources-title" class="sheet-card__title">Muted sources</h2>
+        <p class="sheet-card__lede">Articles from these sites are hidden until you remove them.</p>
+        <ul id="muted-sources-list" class="muted-sources-list"></ul>
+        <p id="muted-sources-empty" class="hint hidden">No muted sources.</p>
+      </div>
+    </div>
 
     <div id="article-sheet" class="article-sheet hidden">
       <div class="sheet-card">
@@ -209,7 +685,26 @@
       </div>
     </div>
 
+    <div id="account-picker-sheet" class="account-picker-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="account-picker-title">
+      <div class="account-picker-sheet__backdrop" data-close-picker></div>
+      <div class="account-picker-sheet__card">
+        <p id="account-picker-title" class="account-picker-sheet__title">Choose</p>
+        <ul id="account-picker-list" class="account-picker-sheet__list"></ul>
+        <button type="button" class="account-picker-sheet__cancel" data-close-picker>Cancel</button>
+      </div>
+    </div>
+
+    <div id="account-field-sheet" class="account-picker-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="account-field-sheet-title">
+      <div class="account-picker-sheet__backdrop" data-close-field-sheet></div>
+      <div class="account-picker-sheet__card">
+        <p id="account-field-sheet-title" class="account-picker-sheet__title">Edit</p>
+        <div id="account-field-sheet-body" class="account-field-sheet__body"></div>
+        <button type="button" id="account-field-sheet-save" class="account-field-sheet__save">Save</button>
+        <button type="button" class="account-picker-sheet__cancel" data-close-field-sheet>Cancel</button>
+      </div>
+    </div>
+
     <div id="toast" class="toast hidden"></div>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=20260523-7"></script>
   </body>
 </html>

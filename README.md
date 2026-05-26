@@ -5,9 +5,9 @@ Quick POC: mobile-first webapp that generates a personalized morning audio brief
 ## What this POC does
 
 - Accepts an MVP portfolio of exactly 5 securities (stock/ETF/bond labels).
-- Lets users choose one general news category (macro, UK politics, sport, tech, energy).
+- Lets users choose one focus area for general news (Macro, Stock Markets, Central Banks & Rates, Commodities & Energy, Technology & AI, Real Estate & Housing, Crypto & Digital Assets, Geopolitics & Trade, UK Politics & Economy, US Politics & Economy, Sport, Manufacturing & Industry, Consumer & Retail, Healthcare & Pharma).
 - Pulls overnight portfolio + category articles from NewsAPI.
-- Fetches live quote snapshots (price and movement) from Yahoo Finance quote endpoint.
+- Fetches live quote snapshots (price and one-day move) from **Finnhub** (`/quote`).
 - Builds a neutral, personalized daily script (no buy/sell/hold) and show notes.
 - Generates natural voice MP3 audio with OpenAI TTS.
 - Exposes a mobile-style web UI and API endpoint for daily brief generation.
@@ -29,13 +29,14 @@ Quick POC: mobile-first webapp that generates a personalized morning audio brief
 - Python 3.10+
 - NewsAPI key
 - OpenAI API key
+- **Finnhub** API key (for watchlist prices in the daily brief — set `FINNHUB_API_KEY` in `.env`)
 
 ## Setup
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txtv
+pip install -r requirements.txt
 ```
 
 If `python3 -m venv` fails because `python3-venv` is missing, install dependencies directly:
@@ -43,6 +44,12 @@ If `python3 -m venv` fails because `python3-venv` is missing, install dependenci
 ```bash
 pip3 install --break-system-packages -r requirements.txt
 ```
+
+Create a `.env` file (see `.env.example`) with your API keys, including:
+
+`FINNHUB_API_KEY=your_key_here`
+
+Without a Finnhub key, the app still runs and briefings still generate, but live watchlist prices are omitted.
 
 ## Run API server
 
