@@ -54,6 +54,14 @@ def _raise_user_brief_error(technical: str, *, status_code: int = 502) -> None:
     raise HTTPException(status_code=status_code, detail=USER_BRIEF_ERROR_MESSAGE)
 
 
+def _missing_required_keys(settings: object) -> list[str]:
+    required = {
+        "OPENAI_API_KEY": getattr(settings, "openai_api_key", ""),
+        "NEWSAPI_KEY": getattr(settings, "newsapi_key", ""),
+    }
+    return [name for name, value in required.items() if not str(value or "").strip()]
+
+
 def _newsapi_empty_feed_hint() -> str:
     err = get_recent_newsapi_failure(max_age_sec=90.0)
     if not err:
@@ -93,8 +101,13 @@ async def _timed_stage(stage: str, awaitable: Awaitable[T]) -> T:
 
 async def build_briefing(req: BriefingRequest, *, refresh_news: bool = False) -> BriefingResponse:
     settings = get_settings()
-    if not (settings.openai_api_key or "").strip() or not (settings.newsapi_key or "").strip():
-        raise HTTPException(status_code=500, detail="Missing OPENAI_API_KEY or NEWSAPI_KEY in environment.")
+    missing_keys = _missing_required_keys(settings)
+    if missing_keys:
+        logger.error("briefing_missing_required_environment keys=%s", ",".join(missing_keys))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required environment variable(s): {', '.join(missing_keys)}.",
+        )
 
     tickers = [t.strip().upper() for t in req.tickers if t.strip()]
     if not tickers:
@@ -232,8 +245,13 @@ def _article_pool_links(articles: list[Article], *, prefix: str) -> list[SourceL
 
 async def build_daily_brief(req: DailyBriefRequest, *, refresh_news: bool = False) -> DailyBriefResponse:
     settings = get_settings()
-    if not (settings.openai_api_key or "").strip() or not (settings.newsapi_key or "").strip():
-        raise HTTPException(status_code=500, detail="Missing OPENAI_API_KEY or NEWSAPI_KEY in environment.")
+    missing_keys = _missing_required_keys(settings)
+    if missing_keys:
+        logger.error("daily_brief_missing_required_environment keys=%s", ",".join(missing_keys))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Missing required environment variable(s): {', '.join(missing_keys)}.",
+        )
 
     if len(req.portfolio) < 1 or len(req.portfolio) > 5:
         raise HTTPException(
@@ -462,6 +480,7 @@ async def build_daily_brief(req: DailyBriefRequest, *, refresh_news: bool = Fals
     except ValueError as exc:
         _raise_user_brief_error(f"Model output parsing failed: {exc}", status_code=502)
     except Exception as exc:
+        logger.exception("daily_brief_unexpected_exception")
         _raise_user_brief_error(f"unexpected error: {type(exc).__name__}: {exc}", status_code=500)
 
     audio_basename = Path(audio_file).name

@@ -2,8 +2,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import os
-
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -13,9 +11,6 @@ from app.models import BriefingRequest, BriefingResponse, DailyBriefRequest, Dai
 from app.quotes import get_all_quotes
 from app.service import build_briefing, build_daily_brief
 from app.stocks import search_stocks
-
-api_key = os.getenv("FINNHUB_API_KEY")
-print(f"Finnhub key loaded: {bool(api_key)}, length: {len(api_key) if api_key else 0}")
 
 app = FastAPI(title="Morning Stock Briefing POC", version="0.1.0")
 settings = get_settings()
