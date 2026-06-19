@@ -14,7 +14,7 @@ from app.ticker_match import headline_mentions_ticker_or_company
 logger = logging.getLogger(__name__)
 
 MAX_PORTFOLIO_ARTICLES = 10
-MAX_CATEGORY_ARTICLES = 3
+MAX_CATEGORY_ARTICLES = 5
 CATEGORY_MAX_AGE_HOURS = 48
 
 FINANCE_CATEGORY_KEYS: frozenset[str] = frozenset(
@@ -427,6 +427,28 @@ def matches_general_category(text: str, general_category: str) -> bool:
     return False
 
 
+def category_relevance_score(article: Article, general_category: str) -> tuple[int, int, int, int, float]:
+    """Rank category stories by direct focus-area relevance before source quality and recency."""
+    key = normalize_focus_area_key(general_category)
+    signals = CATEGORY_SIGNALS.get(key, CATEGORY_SIGNALS["macro"])
+    title = (article.title or "").lower()
+    text = article_combined_text(article).lower()
+
+    title_matches = sum(1 for signal in signals if _contains_category_signal(title, signal))
+    total_matches = sum(1 for signal in signals if _contains_category_signal(text, signal))
+    financial_match = 1 if key not in FINANCE_CATEGORY_KEYS or article_has_financial_content(article) else 0
+    published = article.published_at
+    if published.tzinfo is None:
+        published = published.replace(tzinfo=timezone.utc)
+    return (
+        title_matches,
+        total_matches,
+        financial_match,
+        source_reputation_score(article),
+        published.timestamp(),
+    )
+
+
 def matching_focus_categories(article: Article, focus_categories: list[str]) -> list[str]:
     text = article_combined_text(article)
     if not text:
@@ -682,7 +704,7 @@ def select_articles_for_brief(
     hours_back: int = CATEGORY_MAX_AGE_HOURS,
 ) -> list[Article]:
     """
-    Build the final article list: up to 10 portfolio stories and up to 3 per focus category.
+    Build the final article list: up to 10 portfolio stories and up to 5 total category stories.
     Applies safety checks, deduplication, and category tagging on each Article.
     """
     normalized_cats: list[str] = []
@@ -723,30 +745,36 @@ def select_articles_for_brief(
         and not article_qualifies_as_portfolio(a, portfolio)
     ]
 
-    selected_category: list[Article] = []
+    category_candidates: list[tuple[tuple[int, int, int, int, float], Article, str]] = []
+    seen_candidate_urls: set[str] = set()
     for cat_key in normalized_cats:
         cat_candidates = [
             a
             for a in category_pool
             if article_matches_category_feed(a, cat_key)
             and (a.url or "") not in seen_urls
-            and not any(headlines_near_duplicate(a.title or "", s.title or "") for s in selected_category)
         ]
-        cat_candidates.sort(
-            key=lambda a: (source_reputation_score(a), a.published_at.timestamp()),
-            reverse=True,
-        )
-        count = 0
         for article in cat_candidates:
-            if count >= MAX_CATEGORY_ARTICLES:
-                break
             url = (article.url or "").strip()
-            if url and url in seen_urls:
+            if url and url in seen_candidate_urls:
+                continue
+            if any(headlines_near_duplicate(article.title or "", existing.title or "") for _, existing, _ in category_candidates):
                 continue
             if url:
-                seen_urls.add(url)
-            selected_category.append(_tag_article(article, focus_category_key=cat_key))
-            count += 1
+                seen_candidate_urls.add(url)
+            category_candidates.append((category_relevance_score(article, cat_key), article, cat_key))
+
+    category_candidates.sort(key=lambda row: row[0], reverse=True)
+    selected_category: list[Article] = []
+    for _, article, cat_key in category_candidates:
+        if len(selected_category) >= MAX_CATEGORY_ARTICLES:
+            break
+        url = (article.url or "").strip()
+        if url and url in seen_urls:
+            continue
+        if url:
+            seen_urls.add(url)
+        selected_category.append(_tag_article(article, focus_category_key=cat_key))
 
     result = selected_portfolio + selected_category
 
