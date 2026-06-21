@@ -1,0 +1,27 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - gcr.io/344713209479/ai-investment-summary
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - gcr.io/344713209479/ai-investment-summary
+
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      - run
+      - deploy
+      - ai-investment-summary
+      - --image
+      - gcr.io/344713209479/ai-investment-summary
+      - --region
+      - europe-west1
+      - --platform
+      - managed
+
+images:
+  - gcr.io/344713209479/ai-investment-summary
