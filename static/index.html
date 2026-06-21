@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <meta http-equiv="Pragma" content="no-cache" />
     <title>MarketCall</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -10,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/static/styles.css?v=20260621-1" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260621-2" />
   </head>
   <body>
     <div class="app-background"></div>
@@ -398,6 +400,27 @@
           </div>
 
           <div id="account-view-profile" class="account-view is-active">
+            <p class="account-section-label">Generation limit</p>
+            <div class="account-group account-master-unlock">
+              <div class="account-row account-row--stacked">
+                <span class="account-row__main account-row__main--full">
+                  <span class="account-row__label">Master password</span>
+                  <span id="master-unlock-status" class="account-row__sub">One successful brief per day.</span>
+                </span>
+                <div class="account-master-unlock__form">
+                  <input
+                    id="master-password"
+                    class="account-master-unlock__input"
+                    type="password"
+                    placeholder="Enter master password"
+                    autocomplete="current-password"
+                    aria-label="Master password"
+                  />
+                  <button id="master-unlock-btn" class="account-master-unlock__btn" type="button">Unlock</button>
+                </div>
+              </div>
+            </div>
+
             <div class="account-pro-banner">
               <span class="account-pro-banner__icon" aria-hidden="true">⚡</span>
               <div class="account-pro-banner__copy">
@@ -478,27 +501,6 @@
                 </span>
                 <span class="account-row__chevron" aria-hidden="true">›</span>
               </button>
-            </div>
-
-            <p class="account-section-label">Generation limit</p>
-            <div class="account-group account-master-unlock">
-              <div class="account-row account-row--stacked">
-                <span class="account-row__main account-row__main--full">
-                  <span class="account-row__label">Master password</span>
-                  <span id="master-unlock-status" class="account-row__sub">One successful brief per day.</span>
-                </span>
-                <div class="account-master-unlock__form">
-                  <input
-                    id="master-password"
-                    class="account-master-unlock__input"
-                    type="password"
-                    placeholder="Enter master password"
-                    autocomplete="current-password"
-                    aria-label="Master password"
-                  />
-                  <button id="master-unlock-btn" class="account-master-unlock__btn" type="button">Unlock</button>
-                </div>
-              </div>
             </div>
 
             <p class="account-section-label">App</p>
@@ -726,6 +728,6 @@
     </div>
 
     <div id="toast" class="toast hidden"></div>
-    <script src="/static/app.js?v=20260621-1"></script>
+    <script src="/static/app.js?v=20260621-2"></script>
   </body>
 </html>

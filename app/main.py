@@ -92,4 +92,10 @@ async def test_finnhub() -> dict:
 
 @app.get("/")
 async def home() -> FileResponse:
-    return FileResponse("static/index.html")
+    return FileResponse(
+        "static/index.html",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+        },
+    )

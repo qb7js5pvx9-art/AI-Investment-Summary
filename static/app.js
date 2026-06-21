@@ -1038,17 +1038,20 @@ function readDailyGenerationLimit() {
 function writeDailyGenerationLimit(value) {
   try {
     localStorage.setItem(DAILY_GENERATION_LIMIT_KEY, JSON.stringify(value));
+    return true;
   } catch {
-    /* ignore quota errors */
+    return false;
   }
 }
 
 function markDailyBriefGenerated(payload) {
-  writeDailyGenerationLimit({
+  const record = {
     date: todayLocalKey(),
     generatedAt: payload?.generated_at || new Date().toISOString(),
     count: 1,
-  });
+  };
+  const stored = writeDailyGenerationLimit(record);
+  console.info("Daily generation limit recorded", { stored, date: record.date });
   syncDailyLimitUi();
 }
 
