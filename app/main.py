@@ -2,12 +2,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import hmac
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from app.config import get_settings
-from app.models import BriefingRequest, BriefingResponse, DailyBriefRequest, DailyBriefResponse, StockSearchResponse
+from app.models import (
+    BriefingRequest,
+    BriefingResponse,
+    DailyBriefRequest,
+    DailyBriefResponse,
+    MasterUnlockRequest,
+    MasterUnlockResponse,
+    StockSearchResponse,
+)
 from app.quotes import get_all_quotes
 from app.service import build_briefing, build_daily_brief
 from app.stocks import search_stocks
@@ -37,6 +47,14 @@ async def create_daily_brief(req: DailyBriefRequest, refresh_news: bool = False)
 async def stock_search(q: str = "", limit: int = 12) -> StockSearchResponse:
     bounded_limit = max(1, min(limit, 25))
     return StockSearchResponse(results=search_stocks(query=q, limit=bounded_limit))
+
+
+@app.post("/profile/master-unlock", response_model=MasterUnlockResponse)
+async def verify_master_unlock(req: MasterUnlockRequest) -> MasterUnlockResponse:
+    configured = (settings.master_password or "").strip()
+    submitted = (req.password or "").strip()
+    unlocked = bool(configured) and hmac.compare_digest(submitted, configured)
+    return MasterUnlockResponse(unlocked=unlocked)
 
 
 @app.get("/market-quotes")

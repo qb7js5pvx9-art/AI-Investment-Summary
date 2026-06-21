@@ -19,6 +19,8 @@ const state = {
   watchlistQuotes: {},
   preparedArticles: [],
   sessionMutedDomains: new Set(),
+  masterUnlocked: false,
+  limitCountdownTimer: null,
 };
 
 const USER_BRIEF_ERROR_MESSAGE = "Something went wrong, please try again";
@@ -28,6 +30,8 @@ const PROFILE_STORAGE_KEY = "marketcall_profile_v1";
 const SAVED_NOTES_KEY = "marketcall_saved_notes";
 const LAST_TONE_COUNTS_KEY = "marketcall_last_tone_counts";
 const BRIEF_LISTENED_KEY = "marketcall_brief_listened_v1";
+const DAILY_GENERATION_LIMIT_KEY = "marketcall_daily_generation_limit_v1";
+const MASTER_UNLOCK_SESSION_KEY = "marketcall_master_unlocked_session_v1";
 const DEFAULT_BRIEF_MINUTES = 4;
 const SAVED_ARTICLES_KEY = "savedArticles";
 const MUTED_SOURCES_KEY = "mutedSources";
@@ -244,6 +248,9 @@ const el = {
   notificationTime: document.getElementById("notification-time"),
   alarmMode: document.getElementById("alarm-mode"),
   alarmSetupBtn: document.getElementById("alarm-setup-btn"),
+  masterPassword: document.getElementById("master-password"),
+  masterUnlockBtn: document.getElementById("master-unlock-btn"),
+  masterUnlockStatus: document.getElementById("master-unlock-status"),
   accountPageTitle: document.getElementById("account-page-title"),
   accountSegment: document.getElementById("account-segment"),
   accountSegmentThumb: document.getElementById("account-segment-thumb"),
@@ -994,6 +1001,108 @@ function writeSeenArticleIds(ids) {
   }
 }
 
+function todayLocalKey(date = new Date()) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function midnightTonight(date = new Date()) {
+  const next = new Date(date);
+  next.setHours(24, 0, 0, 0);
+  return next;
+}
+
+function formatCountdownToMidnight(now = new Date()) {
+  const ms = Math.max(0, midnightTonight(now).getTime() - now.getTime());
+  const totalSeconds = Math.ceil(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+}
+
+function readDailyGenerationLimit() {
+  try {
+    const raw = localStorage.getItem(DAILY_GENERATION_LIMIT_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeDailyGenerationLimit(value) {
+  try {
+    localStorage.setItem(DAILY_GENERATION_LIMIT_KEY, JSON.stringify(value));
+  } catch {
+    /* ignore quota errors */
+  }
+}
+
+function markDailyBriefGenerated(payload) {
+  writeDailyGenerationLimit({
+    date: todayLocalKey(),
+    generatedAt: payload?.generated_at || new Date().toISOString(),
+    count: 1,
+  });
+  syncDailyLimitUi();
+}
+
+function hasReachedDailyLimit() {
+  if (state.masterUnlocked) return false;
+  const saved = readDailyGenerationLimit();
+  return saved?.date === todayLocalKey() && Number(saved.count || 0) >= 1;
+}
+
+function readMasterUnlockSession() {
+  try {
+    return sessionStorage.getItem(MASTER_UNLOCK_SESSION_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeMasterUnlockSession(unlocked) {
+  try {
+    if (unlocked) sessionStorage.setItem(MASTER_UNLOCK_SESSION_KEY, "1");
+    else sessionStorage.removeItem(MASTER_UNLOCK_SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function syncMasterUnlockUi() {
+  if (el.masterUnlockStatus) {
+    el.masterUnlockStatus.textContent = state.masterUnlocked
+      ? "Unlimited generation unlocked for this session."
+      : "One successful brief per day.";
+  }
+  if (el.masterPassword) {
+    el.masterPassword.disabled = state.masterUnlocked;
+    if (state.masterUnlocked) el.masterPassword.value = "";
+  }
+  if (el.masterUnlockBtn) {
+    el.masterUnlockBtn.disabled = state.masterUnlocked;
+    el.masterUnlockBtn.textContent = state.masterUnlocked ? "Unlocked" : "Unlock";
+  }
+}
+
+function syncDailyLimitUi() {
+  syncMasterUnlockUi();
+  setRefreshButtonLoading(state.loading);
+}
+
+function startDailyLimitCountdownTimer() {
+  if (state.limitCountdownTimer) clearInterval(state.limitCountdownTimer);
+  state.limitCountdownTimer = setInterval(() => {
+    syncDailyLimitUi();
+  }, 1000);
+}
+
 function countNewStories(links) {
   if (!links?.length) return 0;
   const seen = new Set(readSeenArticleIds());
@@ -1508,6 +1617,7 @@ function clearAllUserData() {
     SAVED_NOTES_KEY,
     LAST_TONE_COUNTS_KEY,
     BRIEF_LISTENED_KEY,
+    DAILY_GENERATION_LIMIT_KEY,
     SEEN_ARTICLE_IDS_KEY,
     MUTED_SOURCES_KEY,
   ].forEach((key) => {
@@ -1522,6 +1632,8 @@ function clearAllUserData() {
   state.preparedArticles = [];
   state.watchlistQuotes = {};
   state.sessionMutedDomains = new Set();
+  state.masterUnlocked = false;
+  writeMasterUnlockSession(false);
   if (el.listenerName) el.listenerName.value = "Angus";
   if (el.listenerEmail) el.listenerEmail.value = "";
   if (el.investorType) el.investorType.value = "General investor";
@@ -1533,6 +1645,7 @@ function clearAllUserData() {
   renderNotesSummary(null);
   renderArticles();
   syncHomeBriefUi();
+  syncDailyLimitUi();
   refreshIdleHeroGreeting();
   toast("All data cleared");
 }
@@ -1731,6 +1844,7 @@ function beginBriefProgress() {
 
 /** Idle label for the in-card refresh control (icon is separate). */
 function refreshBriefButtonIdleLabel() {
+  if (hasReachedDailyLimit()) return `Resets in ${formatCountdownToMidnight()}`;
   return state.brief ? "Refresh" : "Generate";
 }
 
@@ -1741,9 +1855,11 @@ function syncRefreshBriefButtonIdleLabel() {
 
 function setRefreshButtonLoading(isLoading) {
   if (!el.refreshBriefBtn) return;
-  el.refreshBriefBtn.disabled = isLoading;
+  const limited = hasReachedDailyLimit();
+  el.refreshBriefBtn.disabled = isLoading || limited;
   el.refreshBriefBtn.classList.toggle("brief-refresh--loading", isLoading);
-  el.refreshBriefBtn.classList.toggle("brief-refresh--ready", !isLoading && isBriefReady());
+  el.refreshBriefBtn.classList.toggle("brief-refresh--limited", !isLoading && limited);
+  el.refreshBriefBtn.classList.toggle("brief-refresh--ready", !isLoading && !limited && isBriefReady());
   el.refreshIcon?.classList.toggle("hidden", isLoading);
   el.refreshSpinner?.classList.toggle("hidden", !isLoading);
   if (el.refreshBriefLabel) {
@@ -3239,6 +3355,13 @@ function applyBriefGenerationCancelledUi() {
 async function generateDailyBrief(evt) {
   evt?.preventDefault?.();
   if (state.loading) return;
+  if (hasReachedDailyLimit()) {
+    const msg = `Daily generation limit reached. Try again in ${formatCountdownToMidnight()}, or unlock unlimited generation in Profile.`;
+    setStatus(msg, true);
+    toast("Daily limit reached");
+    syncDailyLimitUi();
+    return;
+  }
   if (!state.portfolio.length) {
     setStatus("Add at least one holding to your watchlist on the Profile tab.", true);
     toast("Add a holding to your watchlist first");
@@ -3298,6 +3421,7 @@ async function generateDailyBrief(evt) {
       return;
     }
     renderBrief(payload);
+    if (!state.masterUnlocked) markDailyBriefGenerated(payload);
     switchScreen("briefings");
     setStatus("Daily brief ready.");
     toast("Briefing ready");
@@ -3327,6 +3451,41 @@ async function requestNotifications() {
   const permission = await Notification.requestPermission();
   toast(`Notification permission: ${permission}`);
   scheduleReminder();
+}
+
+async function unlockUnlimitedGeneration() {
+  const password = String(el.masterPassword?.value || "").trim();
+  if (!password) {
+    toast("Enter the master password");
+    el.masterPassword?.focus();
+    return;
+  }
+  if (el.masterUnlockBtn) el.masterUnlockBtn.disabled = true;
+  try {
+    const res = await fetch("/profile/master-unlock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok || !payload.unlocked) {
+      writeMasterUnlockSession(false);
+      state.masterUnlocked = false;
+      syncDailyLimitUi();
+      toast("Incorrect master password");
+      return;
+    }
+    state.masterUnlocked = true;
+    writeMasterUnlockSession(true);
+    syncDailyLimitUi();
+    setStatus("");
+    toast("Unlimited generation unlocked");
+  } catch (err) {
+    console.error("Master unlock failed", err);
+    toast("Could not verify password");
+  } finally {
+    syncDailyLimitUi();
+  }
 }
 
 function scheduleReminder() {
@@ -3486,6 +3645,13 @@ function bindEvents() {
   el.alarmSheet?.addEventListener("click", (e) => {
     if (e.target === el.alarmSheet) closeAlarmSheet();
   });
+  el.masterUnlockBtn?.addEventListener("click", () => void unlockUnlimitedGeneration());
+  el.masterPassword?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      void unlockUnlimitedGeneration();
+    }
+  });
   el.refreshBriefBtn?.addEventListener("click", generateDailyBrief);
   el.playBtn?.addEventListener("click", () => void toggleAudioPlayback());
   el.portfolioInsightsMore?.addEventListener("click", () => switchScreen("show-notes"));
@@ -3508,6 +3674,7 @@ function bindEvents() {
       refreshAppTitle();
       refreshHomeDateLine();
       refreshIdleHeroGreeting();
+      syncDailyLimitUi();
     }
   });
   document.addEventListener("click", (e) => {
@@ -3533,6 +3700,8 @@ function initTheme() {
 function init() {
   initTheme();
   assertRequiredDom();
+  state.masterUnlocked = readMasterUnlockSession();
+  startDailyLimitCountdownTimer();
   loadProfileFromStorage();
   syncFocusAreaHint();
   buildArticleFilterPills();
@@ -3552,6 +3721,7 @@ function init() {
   setStatus("");
   syncRefreshBriefButtonIdleLabel();
   setRefreshButtonLoading(false);
+  syncDailyLimitUi();
   renderNotesSummary(state.brief);
   renderArticles();
   syncAiFootnote();

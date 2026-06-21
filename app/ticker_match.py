@@ -69,6 +69,26 @@ def _company_terms(ticker: str) -> list[str]:
     return terms
 
 
+def _company_primary_terms(ticker: str) -> list[str]:
+    clean = (ticker or "").strip().upper()
+    if not clean:
+        return []
+    name = get_company_name(clean)
+    if not name:
+        return []
+
+    primary = name.split(",")[0].strip()
+    compact = _COMPANY_SUFFIX_RE.sub("", primary).strip(" ,.-")
+    if compact.lower().startswith("the "):
+        compact = compact[4:].strip()
+
+    terms: list[str] = []
+    for term in (compact, primary):
+        if len(term) >= 4 and term not in terms:
+            terms.append(term)
+    return terms
+
+
 def ticker_mentioned_in_text(text: str, ticker: str) -> bool:
     """True when *ticker* appears as a financial reference, not a substring/word variant."""
     sym = (ticker or "").strip()
@@ -99,6 +119,13 @@ def company_name_mentioned_in_text(text: str, ticker: str) -> bool:
     return any(re.search(_standalone_pattern(term), text, re.IGNORECASE) for term in _company_terms(ticker))
 
 
+def company_primary_name_mentioned_in_text(text: str, ticker: str) -> bool:
+    """Match the full/primary company name; excludes loose single-word brand matches."""
+    if not text:
+        return False
+    return any(re.search(_standalone_pattern(term), text, re.IGNORECASE) for term in _company_primary_terms(ticker))
+
+
 def company_brand_mentioned_in_text(text: str, ticker: str) -> bool:
     """Match distinctive brand token (e.g. Apple, Tesla) — not used for short tickers like PEP."""
     if not text:
@@ -123,8 +150,17 @@ def headline_mentions_ticker_or_company(headline: str, ticker: str) -> bool:
     return company_brand_mentioned_in_text(headline, ticker)
 
 
+def headline_has_direct_ticker_or_company_name(headline: str, ticker: str) -> bool:
+    """Strict headline match for portfolio linkage: ticker or full company name only."""
+    if not headline or not (ticker or "").strip():
+        return False
+    if ticker_mentioned_in_text(headline, ticker):
+        return True
+    return company_primary_name_mentioned_in_text(headline, ticker)
+
+
 def article_text_mentions_ticker(article_title: str, description: str, content: str, ticker: str) -> bool:
-    return headline_mentions_ticker_or_company(article_title, ticker)
+    return headline_has_direct_ticker_or_company_name(article_title, ticker)
 
 
 def related_tickers_for_article(
@@ -138,6 +174,6 @@ def related_tickers_for_article(
         sym = t.strip().upper()
         if not sym:
             continue
-        if headline_mentions_ticker_or_company(title, sym):
+        if headline_has_direct_ticker_or_company_name(title, sym):
             matched.append(sym)
     return matched

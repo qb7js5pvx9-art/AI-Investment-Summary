@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     newsapi_key: str = ""
     finnhub_api_key: str = ""
+    master_password: str = ""
     newsapi_base_url: str = "https://newsapi.org/v2/everything"
     output_dir: str = "outputs"
     # Server-side article cache (NewsAPI only). 0 disables. Refresh bypasses read and replaces entry.

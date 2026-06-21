@@ -9,7 +9,7 @@ from difflib import SequenceMatcher
 
 from app.focus_areas import CATEGORY_SIGNALS, focus_area_label, normalize_focus_area_key
 from app.models import Article, PortfolioSecurity
-from app.ticker_match import headline_mentions_ticker_or_company
+from app.ticker_match import headline_has_direct_ticker_or_company_name
 
 logger = logging.getLogger(__name__)
 
@@ -478,10 +478,10 @@ def article_within_category_window(article: Article, hours: float = CATEGORY_MAX
 
 
 def article_mentions_watchlist(article: Article, portfolio: list[PortfolioSecurity]) -> bool:
-    """Fetch-time watchlist mention check: headline only, whole words only."""
+    """Fetch-time watchlist mention check: strict headline ticker/full-company match only."""
     title = article.title or ""
     for item in portfolio:
-        if headline_mentions_ticker_or_company(title, item.ticker):
+        if headline_has_direct_ticker_or_company_name(title, item.ticker):
             return True
     return False
 
@@ -497,11 +497,11 @@ def _portfolio_ticker_for_article(article: Article, portfolio: list[PortfolioSec
 
     for raw in article.related_tickers or []:
         key = (raw or "").strip().upper()
-        if key in by_ticker:
+        if key in by_ticker and headline_has_direct_ticker_or_company_name(title, key):
             return by_ticker[key]
 
     for item in portfolio:
-        if headline_mentions_ticker_or_company(title, item.ticker):
+        if headline_has_direct_ticker_or_company_name(title, item.ticker):
             return item.ticker
     return None
 
@@ -512,12 +512,12 @@ def portfolio_ticker_for_article(article: Article, portfolio: list[PortfolioSecu
 
 def company_is_primary_subject(article: Article, ticker: str) -> bool:
     title = article.title or ""
-    if not headline_mentions_ticker_or_company(title, ticker):
+    if not headline_has_direct_ticker_or_company_name(title, ticker):
         return False
     clean = (ticker or "").strip().upper()
     if clean in _AMBIGUOUS_COMPANY_TICKERS and not re.search(rf"\$?\b{re.escape(clean)}\b|\({re.escape(clean)}\)", title):
         return bool(_COMPANY_PRIMARY_CONTEXT_RE.search(title))
-    return True
+    return has_portfolio_business_signal(title)
 
 
 def has_portfolio_business_signal(text: str) -> bool:
@@ -560,7 +560,7 @@ def article_qualifies_as_portfolio(article: Article, portfolio: list[PortfolioSe
 
 
 def headline_ticker_match(article: Article, ticker: str) -> bool:
-    return headline_mentions_ticker_or_company(article.title or "", ticker)
+    return headline_has_direct_ticker_or_company_name(article.title or "", ticker)
 
 
 def portfolio_business_impact_score(article: Article) -> int:
@@ -676,11 +676,12 @@ def dedupe_articles(articles: list[Article]) -> list[Article]:
 
 
 def _tag_article(article: Article, *, focus_category_key: str = "", portfolio_ticker: str = "") -> Article:
-    updates: dict[str, str] = {}
+    updates: dict[str, object] = {}
     if portfolio_ticker:
         updates["article_kind"] = "portfolio"
         updates["portfolio_ticker"] = portfolio_ticker
         updates["focus_category"] = ""
+        updates["related_tickers"] = [portfolio_ticker]
     elif focus_category_key:
         updates["article_kind"] = "category"
         updates["focus_category"] = focus_category_key

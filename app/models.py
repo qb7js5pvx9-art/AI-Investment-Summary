@@ -42,6 +42,14 @@ class StockSearchResponse(BaseModel):
     results: list[dict[str, str]]
 
 
+class MasterUnlockRequest(BaseModel):
+    password: str = Field(default="", max_length=200)
+
+
+class MasterUnlockResponse(BaseModel):
+    unlocked: bool
+
+
 class PortfolioSecurity(BaseModel):
     ticker: str
     asset_type: Literal["stock", "etf", "bond"] = "stock"

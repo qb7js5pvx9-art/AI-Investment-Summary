@@ -22,7 +22,7 @@ from app.article_filter import (
 from app.focus_areas import focus_area_label, normalize_focus_area_key
 from app.config import get_settings
 from app.models import Article, PortfolioInsight, PortfolioQuote, PortfolioSecurity, SecurityImpactNote, SourceLink
-from app.ticker_match import headline_mentions_ticker_or_company
+from app.ticker_match import headline_has_direct_ticker_or_company_name
 
 logger = logging.getLogger(__name__)
 
@@ -379,6 +379,15 @@ def generate_daily_brief(
         "- Group thinner items into a brief 'quick hits' passage rather than dragging each one out.\n"
         "- Spend more airtime on genuinely important developments; keep weaker stories proportionately short.\n"
         "- Avoid repeated stock phrases about nothing happening; avoid filler added only to extend length.\n\n"
+        "Written stock notes — analytical impact requirement:\n"
+        "- For every security_impact_notes item, the `update` field states the concrete sourced development for that "
+        "specific ticker, not a generic market headline.\n"
+        "- The `why_it_matters` field must explain the likely transmission mechanism for that stock: revenue or margin "
+        "expectations, demand, costs, regulation, litigation risk, competitive position, balance sheet, guidance, "
+        "valuation, analyst sentiment, sector read-through, or risk appetite. Be specific about why investors may "
+        "reprice the stock or change sentiment; do not merely repeat the update in softer language.\n"
+        "- If the source connection to the ticker is weak, indirect, or only a passing mention, omit the stock note "
+        "entirely. Fewer high-confidence notes are better than broad but loose coverage.\n\n"
         "Spoken script — shape (flexible, not a rigid checklist; pacing and macro versus names follow the "
         "investor-type profile):\n"
         "- Open with salutation + name, then a tight framing of what matters in markets or the category today.\n"
@@ -393,10 +402,12 @@ def generate_daily_brief(
         '- greeting: string — one short salutation line with their name (matches time of day).\n'
         "- security_impact_notes: array of objects "
         '{"ticker","asset_type","update","why_it_matters","sentiment"} — include at most one object per watchlist '
-        "ticker, and only where there is material sourced information worth a note. Omit tickers with nothing "
-        "meaningful to say; fewer than five entries is correct when the news flow is thin. "
-        "update and why_it_matters are for the written notes UI (tight, investor-focused, British English); "
-        "they must not invent facts beyond sources.\n"
+        "ticker, and only where there is material, directly ticker-linked sourced information worth a note. Omit "
+        "tickers with nothing meaningful or directly connected to say; fewer than five entries is correct when the "
+        "news flow is thin. `update` and `why_it_matters` are for the written notes UI (tight, investor-focused, "
+        "British English). `why_it_matters` must be specific and analytical: name the plausible price or investor "
+        "sentiment driver, such as earnings expectations, growth outlook, margins, legal/regulatory risk, competitive "
+        "position, valuation, or sector read-through. Do not invent facts beyond sources.\n"
         '- general_news_notes: array of strings — concise bullets for the notes UI (British English).\n'
         '- show_notes_summary: array of strings — short headline bullets for the notes UI only; NOT the audio.\n'
         '- quote_of_day: string — British English; reflective, not trite.\n'
@@ -600,10 +611,10 @@ def _assign_article_tags(
     if article_qualifies_as_portfolio(article, portfolio):
         for raw in article.related_tickers or []:
             key = (raw or "").strip().upper()
-            if key in by_ticker:
+            if key in by_ticker and headline_has_direct_ticker_or_company_name(title, key):
                 return by_ticker[key], "portfolio", ""
         for item in portfolio:
-            if headline_mentions_ticker_or_company(title, item.ticker):
+            if headline_has_direct_ticker_or_company_name(title, item.ticker):
                 return item.ticker, "portfolio", ""
 
     matched = matching_focus_categories(article, cats)

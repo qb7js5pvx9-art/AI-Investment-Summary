@@ -30,6 +30,7 @@ Quick POC: mobile-first webapp that generates a personalized morning audio brief
 - NewsAPI key
 - OpenAI API key
 - **Finnhub** API key (for watchlist prices in the daily brief — set `FINNHUB_API_KEY` in `.env`)
+- Optional `MASTER_PASSWORD` for session-only unlimited generation unlock in Profile
 
 ## Setup
 
@@ -50,6 +51,10 @@ Create a `.env` file (see `.env.example`) with your API keys, including:
 `FINNHUB_API_KEY=your_key_here`
 
 Without a Finnhub key, the app still runs and briefings still generate, but live watchlist prices are omitted.
+
+To allow a browser session to bypass the once-per-day generation limit from Profile, set:
+
+`MASTER_PASSWORD=your_secure_password`
 
 ## Run API server
 
